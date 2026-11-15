@@ -1,0 +1,20 @@
+name: Jaga Supabase tetap aktif
+
+# Supabase Free menjeda project setelah 7 hari tanpa aktivitas.
+on:
+  schedule:
+    - cron: "0 1 */3 * *" # tiap 3 hari, 08.00 WIB
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Panggil /api/keepalive
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          KEEPALIVE_SECRET: ${{ secrets.KEEPALIVE_SECRET }}
+        run: |
+          curl --fail --silent --show-error --max-time 30 \
+            -H "x-keepalive-secret: $KEEPALIVE_SECRET" \
+            "$APP_URL/api/keepalive"
