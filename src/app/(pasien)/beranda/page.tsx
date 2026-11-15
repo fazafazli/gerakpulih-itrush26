@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
+import { KirimTertunda } from "@/components/sesi/kirim-tertunda";
 import { wajibPasien } from "@/lib/pasien/sesi";
 import { GERAKAN, isKodeGerakan } from "@/lib/pose/exercises";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = { title: "Latihan hari ini · GerakPulih" };
 
+/** Kerangka sementara untuk membuktikan alur link pasien. Tampilan lengkap menyusul (mockup Sambutan). */
 export default function HalamanBeranda() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-5 py-6 text-[#0F1E2E]">
@@ -46,6 +49,15 @@ async function IsiBeranda() {
           Tangan yang dilatih: <b className="text-[#0F1E2E]">{pasien.sisi_dilatih}</b> (diatur oleh terapis)
         </p>
       </section>
+      {daftar.length > 0 && (
+        <Link
+          href="/sesi"
+          className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-[#0B5CAD] px-5 text-lg font-bold text-white hover:bg-[#08467F]"
+        >
+          Mulai latihan
+        </Link>
+      )}
+      <KirimTertunda pasienId={pasien.id} />
     </>
   );
 }

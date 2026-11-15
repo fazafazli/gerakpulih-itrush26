@@ -1,4 +1,4 @@
-// Cek API key & daftar model yang bisa dipakai, lalu uji satu panggilan.
+// Cek API key & daftar model yang bisa dipakai
 import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY;

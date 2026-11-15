@@ -27,12 +27,6 @@ export type PasienSaatIni = {
   is_demo: boolean;
 };
 
-/**
- * Data Access Layer pasien: SATU-SATUNYA cara kode server mengetahui pasien yang sedang aktif.
- * Selalu memverifikasi tanda tangan cookie DAN status aktif di database (link bisa dicabut terapis).
- * Dibungkus `cache` agar dipanggil berkali-kali dalam satu request tetap 1x query.
- * Membaca cookies() → pemanggil harus berada di dalam <Suspense>.
- */
 export const getPasienSaatIni = cache(async (): Promise<PasienSaatIni | null> => {
   const isi = verifikasiSesi((await cookies()).get(COOKIE_PASIEN)?.value, rahasia());
   if (!isi) return null;

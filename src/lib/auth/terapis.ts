@@ -5,11 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 
 export type TerapisSaatIni = { id: string; nama: string; institusi: string | null; email: string | null };
 
-/**
- * Data Access Layer terapis. proxy.ts hanya pemeriksaan cepat;
- * pemeriksaan yang sesungguhnya ada di sini (getUser memverifikasi ke server Auth).
- * Membaca cookies() → pemanggil harus berada di dalam <Suspense>.
- */
 export const getTerapisSaatIni = cache(async (): Promise<TerapisSaatIni | null> => {
   const supabase = await createClient();
   const {

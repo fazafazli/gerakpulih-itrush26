@@ -1,21 +1,12 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-/**
- * Akses pasien TANPA akun:
- *  - Terapis membuat link /mulai/<token>. Token acak 24 byte; database hanya menyimpan sha256-nya.
- *  - Saat link dibuka, server memberi cookie bertanda tangan HMAC berisi id pasien + masa berlaku.
- * Fungsi di file ini murni (tanpa Next.js) agar mudah diuji.
- */
-
 export const COOKIE_PASIEN = "gp_pasien";
 export const UMUR_SESI_PASIEN_DETIK = 60 * 60 * 24 * 90; // 90 hari: pasien latihan rutin, tak perlu buka link tiap hari
 
-/** Format token yang diterima di URL (base64url). */
 export const POLA_TOKEN = /^[A-Za-z0-9_-]{8,128}$/;
 
 export const buatTokenPasien = (): string => randomBytes(24).toString("base64url");
 
-/** Sama dengan `encode(sha256(token::bytea), 'hex')` di seed.sql. */
 export const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 
 export type IsiSesiPasien = { pid: string; exp: number };
@@ -32,7 +23,7 @@ export function tandatanganiSesi(isi: IsiSesiPasien, rahasia: string): string {
   return `${data}.${tandaTangan(data, rahasia).toString("base64url")}`;
 }
 
-/** null bila kosong, dipalsukan, rusak, atau kedaluwarsa. */
+/** null jika kosong, dipalsukan, rusak, atau kedaluwarsa. */
 export function verifikasiSesi(nilai: string | undefined, rahasia: string, sekarangDetik = Math.floor(Date.now() / 1000)): IsiSesiPasien | null {
   cekRahasia(rahasia);
   if (!nilai) return null;
