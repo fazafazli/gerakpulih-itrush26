@@ -7,7 +7,6 @@ import { VERSI_PROMPT } from "@/lib/ai/prompts";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const Body = z.object({
