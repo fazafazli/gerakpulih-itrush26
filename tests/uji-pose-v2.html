@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Uji Teknis Pose v2 – Fisioterapi Kamera</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
+  header{padding:10px 14px;background:#1e293b;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  header small{font-weight:400;color:#94a3b8}
+  main{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
+  #left{flex:1 1 480px;max-width:760px;display:flex;flex-direction:column;gap:10px}
+  #stage{position:relative;background:#000;border-radius:8px;overflow:hidden}
+  #stage video{width:100%;display:block}
+  #stage canvas{position:absolute;left:0;top:0;width:100%;height:100%}
+  .mirror{transform:scaleX(-1)}
+  #placeholder{padding:60px 20px;text-align:center;color:#94a3b8}
+  #panel{flex:1 1 320px;max-width:470px;display:flex;flex-direction:column;gap:10px}
+  .card{background:#1e293b;border-radius:8px;padding:10px 12px}
+  .card h3{margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .bigrow{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+  .big{font-size:46px;font-weight:700;line-height:1}
+  .unit{font-size:13px;color:#94a3b8}
+  .row{display:flex;justify-content:space-between;gap:8px;margin:3px 0;font-size:14px}
+  label{font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center;margin:5px 0}
+  select,input{background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:4px}
+  input[type=number]{width:72px}
+  button{background:#2563eb;color:#fff;border:0;border-radius:6px;padding:9px 11px;font-size:14px;cursor:pointer}
+  button.sec{background:#334155}
+  button.warnb{background:#b45309}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .btns{display:flex;flex-wrap:wrap;gap:6px}
+  #warn{display:none;background:#b91c1c;color:#fff;padding:9px;border-radius:6px;font-weight:600;text-align:center}
+  #ready{font-size:14px}
+  #ready div{margin:3px 0}
+  #readyBadge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:700}
+  .ok{color:#4ade80}.bad{color:#f87171}.mid{color:#facc15}
+  .bgok{background:#166534;color:#dcfce7}.bgbad{background:#7f1d1d;color:#fee2e2}
+  #status{font-size:13px;color:#94a3b8;min-height:18px}
+  pre{white-space:pre-wrap;font-size:12px;margin:0;font-family:ui-monospace,Consolas,monospace}
+  details summary{cursor:pointer;font-size:13px;color:#94a3b8;margin-bottom:4px}
+  .hint{font-size:12px;color:#94a3b8;margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <span>🧪 Uji Teknis Pose v2 <small>— kalibrasi, cek kesiapan kamera, multi-orang, & ketahanan sesi. Video tidak dikirim ke mana pun.</small></span>
+  <span id="secure"></span>
+</header>
+
+<main>
+  <div id="left">
+    <div id="stage">
+      <div id="placeholder">Tekan <b>Mulai</b> untuk menyalakan kamera.<br>Ikuti panel <b>Cek Kesiapan</b> sampai semua centang hijau, lalu tekan <b>Kalibrasi</b>.</div>
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Cek kesiapan <span id="readyBadge" class="bgbad">BELUM SIAP</span></h3>
+      <div id="ready">Mulai kamera dulu.</div>
+    </div>
+
+    <div class="card">
+      <h3>Monitor ketahanan sesi</h3>
+      <div class="row"><span>Lama sesi</span><b id="elapsed">–</b></div>
+      <div class="row"><span>FPS rata-rata menit pertama</span><b id="fpsFirst">–</b></div>
+      <div class="row"><span>FPS rata-rata 60 dtk terakhir</span><b id="fpsLast">–</b></div>
+      <div class="row"><span>Penurunan FPS</span><b id="fpsDrop">–</b></div>
+      <div class="row"><span>Baterai</span><b id="battery">–</b></div>
+      <div class="row"><span>Error inferensi / ganti model otomatis</span><b id="errs">0 / 0</b></div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <div id="warn">⚠ Kompensasi</div>
+
+    <div class="card">
+      <h3>Pengukuran</h3>
+      <div class="bigrow">
+        <div><div class="big" id="angle">–</div><div class="unit" id="metricLabel">derajat</div></div>
+        <div><div class="big" id="reps">0</div><div class="unit">repetisi</div></div>
+        <div><div class="big" id="target" style="font-size:28px">–</div><div class="unit">target tercapai</div></div>
+      </div>
+      <div class="row"><span>Puncak repetisi terakhir</span><b id="lastPeak">–</b></div>
+      <div class="row"><span>Puncak tertinggi sesi</span><b id="maxPeak">–</b></div>
+      <div class="row"><span>Repetisi dengan kompensasi</span><b id="compReps">0</b></div>
+      <div class="row"><span>Status gerak</span><b id="repState">–</b></div>
+      <div class="row"><span>Acuan sudut bahu</span><b id="refUsed">–</b></div>
+      <div class="row"><span>Kalibrasi istirahat</span><b id="calibInfo" class="mid">belum</b></div>
+    </div>
+
+    <div class="card">
+      <h3>Kualitas deteksi & kompensasi</h3>
+      <div class="row"><span>FPS / inferensi</span><b id="fps">–</b></div>
+      <div class="row"><span>Keyakinan sendi lengan</span><b id="vis">–</b></div>
+      <div class="row"><span>Keyakinan pinggul</span><b id="hipVis">–</b></div>
+      <div class="row"><span>Badan miring (Δ dari kalibrasi)</span><b id="lean">–</b></div>
+      <div class="row"><span>Bahu miring (Δ dari kalibrasi)</span><b id="tilt">–</b></div>
+      <div class="row"><span>Bahu terangkat/shrug (Δ)</span><b id="shrug">–</b></div>
+      <div class="row"><span>Orang terdeteksi</span><b id="people">–</b></div>
+    </div>
+
+    <div class="btns">
+      <button id="btnStart">▶ Mulai</button>
+      <button id="btnCalib" class="warnb" disabled>🎯 Kalibrasi (3 dtk)</button>
+      <button id="btnStab" class="sec" disabled>⏱ Uji stabilitas</button>
+      <button id="btnReset" class="sec" disabled>↺ Reset</button>
+      <button id="btnCsv" class="sec" disabled>⬇ CSV</button>
+    </div>
+
+    <div class="card">
+      <h3>Pengaturan</h3>
+      <label>Gerakan
+        <select id="metric">
+          <option value="bahuKanan">Angkat lengan KANAN (elevasi bahu)</option>
+          <option value="bahuKiri">Angkat lengan KIRI (elevasi bahu)</option>
+          <option value="sikuKanan">Tekuk siku KANAN</option>
+          <option value="sikuKiri">Tekuk siku KIRI</option>
+        </select>
+      </label>
+      <label>Acuan sudut bahu
+        <select id="ref">
+          <option value="auto">Otomatis (pinggul, kalau tak terlihat → vertikal)</option>
+          <option value="hip">Selalu pinggul</option>
+          <option value="vertical">Selalu vertikal (HP harus tegak)</option>
+        </select>
+      </label>
+      <label>Target sudut dari terapis (°) <input type="number" id="targetDeg" value="90"></label>
+      <details>
+        <summary>Pengaturan lanjutan</summary>
+        <label>Mode koordinat sudut
+          <select id="mode"><option value="2d">2D</option><option value="3d">3D (world)</option></select>
+        </label>
+        <label>Amplitudo minimal 1 repetisi (°) <input type="number" id="amp" value="35"></label>
+        <label>Dianggap kembali bila turun (% dari amplitudo) <input type="number" id="retPct" value="65"></label>
+        <label>Durasi minimal 1 repetisi (ms) <input type="number" id="minRepMs" value="600"></label>
+        <label>Batas badan miring Δ (°) <input type="number" id="thLean" value="8"></label>
+        <label>Batas bahu miring Δ (°) <input type="number" id="thTilt" value="8"></label>
+        <label>Batas shrug Δ (%) <input type="number" id="thShrug" value="25"></label>
+        <label>Kompensasi harus bertahan (ms) <input type="number" id="persistMs" value="300"></label>
+        <label>Penghalusan (0,1 halus – 1 mentah) <input type="number" id="alpha" value="0.35" step="0.05"></label>
+        <label>Model
+          <select id="model"><option value="lite">Lite</option><option value="full" selected>Full</option><option value="heavy">Heavy</option></select>
+        </label>
+        <label>Pemrosesan <select id="delegate"><option value="GPU">GPU</option><option value="CPU">CPU</option></select></label>
+        <label>Batas FPS (hemat baterai/panas)
+          <select id="fpsCap"><option value="15">15</option><option value="20" selected>20</option><option value="30">30</option><option value="0">Maksimal</option></select>
+        </label>
+        <label>Turunkan model otomatis bila lambat <input type="checkbox" id="autoDown" checked></label>
+        <label>Kamera <select id="facing"><option value="user">Depan</option><option value="environment">Belakang</option></select></label>
+        <label>Hitung dengan suara <input type="checkbox" id="voice" checked></label>
+      </details>
+    </div>
+
+    <div class="card">
+      <h3>Hasil uji stabilitas</h3>
+      <pre id="stabOut">Duduk diam, lengan ditahan, lalu tekan "Uji stabilitas".</pre>
+    </div>
+    <div id="status"></div>
+  </div>
+</main>
+
+<script type="module">
+import { PoseLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+const $ = (id) => document.getElementById(id);
+const video = $("video"), canvas = $("overlay"), ctx = canvas.getContext("2d");
+const drawer = new DrawingUtils(ctx);
+const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+const MODELS = {
+  lite:  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+  full:  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+  heavy: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",
+};
+// Indeks MediaPipe (kiri/kanan = sisi tubuh orang)
+const J = { NOSE: 0, LEAR: 7, REAR: 8, LS: 11, RS: 12, LE: 13, RE: 14, LW: 15, RW: 16, LH: 23, RH: 24 };
+const SIDE = {
+  bahuKiri:  { S: J.LS, E: J.LE, W: J.LW, H: J.LH, EAR: J.LEAR, kind: "bahu" },
+  bahuKanan: { S: J.RS, E: J.RE, W: J.RW, H: J.RH, EAR: J.REAR, kind: "bahu" },
+  sikuKiri:  { S: J.LS, E: J.LE, W: J.LW, H: J.LH, EAR: J.LEAR, kind: "siku" },
+  sikuKanan: { S: J.RS, E: J.RE, W: J.RW, H: J.RH, EAR: J.REAR, kind: "siku" },
+};
+const LABEL = { bahuKiri: "elevasi bahu kiri", bahuKanan: "elevasi bahu kanan", sikuKiri: "fleksi siku kiri", sikuKanan: "fleksi siku kanan" };
+
+// ---------- State ----------
+let vision = null, landmarker = null, stream = null, running = false, paused = false;
+let lastVideoTime = -1, lastDetect = 0, lastFrameT = 0, fps = 0, infMs = 0;
+let sessionT0 = 0, modelLoadedAt = 0, errCount = 0, downgrades = 0;
+let smooth = null, stab = null, calib = null, base = null, wakeLock = null, battery = null;
+let lockC = null, compSince = null;
+let rep = freshRep();
+let lastStats = null, lastStatsT = 0, orient = null;
+const fpsHist = [];            // satu sampel per detik
+const log = []; const LOG_MAX = 40000;
+
+function freshRep() { return { count: 0, state: "low", valley: null, peak: 0, upAt: 0, lastPeak: null, maxPeak: null, compThis: false, compReps: 0, hitTarget: 0 }; }
+const setStatus = (t) => { $("status").textContent = t; };
+const fmt = (v, d = 0) => (v == null || Number.isNaN(v)) ? "–" : v.toFixed(d);
+const setCls = (el, c) => { el.className = c; };
+const median = (a) => { const s = [...a].filter((x) => !Number.isNaN(x)).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : NaN; };
+
+// ---------- Geometri ----------
+function angle3(a, b, c) {
+  const v1 = [a[0] - b[0], a[1] - b[1], (a[2] || 0) - (b[2] || 0)];
+  const v2 = [c[0] - b[0], c[1] - b[1], (c[2] || 0) - (b[2] || 0)];
+  const n = Math.hypot(...v1) * Math.hypot(...v2);
+  if (!n) return NaN;
+  return Math.acos(Math.min(1, Math.max(-1, (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) / n))) * 180 / Math.PI;
+}
+const px = (l) => { const W = video.videoWidth, H = video.videoHeight; return l.map((p) => [p.x * W, p.y * H, 0]); };
+const wl = (w) => w.map((p) => [p.x, p.y, p.z]);
+
+function computeMetric(l, w, which) {
+  const s = SIDE[which], mode = $("mode").value;
+  const P2 = px(l), P = (mode === "3d" && w) ? wl(w) : P2;
+  const hipVis = l[s.H].visibility ?? 0;
+  if (s.kind === "siku") return { val: 180 - angle3(P[s.S], P[s.E], P[s.W]), ref: "–" };
+  const refSel = $("ref").value;
+  const useHip = refSel === "hip" || (refSel === "auto" && hipVis >= 0.5);
+  if (useHip) return { val: angle3(P[s.E], P[s.S], P[s.H]), ref: "pinggul" + (mode === "3d" ? " · 3D" : " · 2D") };
+  // acuan vertikal: titik tepat di bawah bahu pada gambar (asumsi HP tegak)
+  const S = P2[s.S], down = [S[0], S[1] + 100, 0];
+  return { val: angle3(P2[s.E], S, down), ref: "vertikal · 2D" };
+}
+
+function posture(l, which) {
+  const P = px(l), s = SIDE[which];
+  const sw = Math.hypot(P[J.LS][0] - P[J.RS][0], P[J.LS][1] - P[J.RS][1]) || 1;
+  const hipsOk = Math.min(l[J.LH].visibility ?? 0, l[J.RH].visibility ?? 0) >= 0.5;
+  let lean = NaN;
+  if (hipsOk) {
+    const ms = [(P[J.LS][0] + P[J.RS][0]) / 2, (P[J.LS][1] + P[J.RS][1]) / 2];
+    const mh = [(P[J.LH][0] + P[J.RH][0]) / 2, (P[J.LH][1] + P[J.RH][1]) / 2];
+    lean = Math.atan2(ms[0] - mh[0], -(ms[1] - mh[1])) * 180 / Math.PI;       // bertanda
+  }
+  let tilt = Math.atan2(P[J.LS][1] - P[J.RS][1], P[J.LS][0] - P[J.RS][0]) * 180 / Math.PI;
+  if (tilt > 90) tilt -= 180; if (tilt < -90) tilt += 180;                       // bertanda
+  const earOk = (l[s.EAR].visibility ?? 0) >= 0.5;
+  const shrugRatio = earOk ? (P[s.S][1] - P[s.EAR][1]) / sw : NaN;               // jarak telinga→bahu / lebar bahu
+  return { lean, tilt, shrugRatio, sw };
+}
+
+// ---------- Pilih & kunci 1 orang ----------
+function pickPose(res) {
+  const L = res.landmarks || [];
+  if (!L.length) return -1;
+  const center = (l) => [(l[J.LS].x + l[J.RS].x) / 2, (l[J.LS].y + l[J.RS].y) / 2];
+  let best = 0;
+  if (L.length > 1) {
+    if (lockC) {
+      let bd = Infinity;
+      L.forEach((l, i) => { const c = center(l), d = Math.hypot(c[0] - lockC[0], c[1] - lockC[1]); if (d < bd) { bd = d; best = i; } });
+    } else {
+      let bw = 0;
+      L.forEach((l, i) => { const w = Math.abs(l[J.LS].x - l[J.RS].x); if (w > bw) { bw = w; best = i; } });
+    }
+  }
+  lockC = center(L[best]);
+  return best;
+}
+
+// ---------- Repetisi relatif (tidak bergantung posisi istirahat) ----------
+function updateRep(m, comp, now) {
+  const amp = +$("amp").value, ret = (+$("retPct").value) / 100, minMs = +$("minRepMs").value;
+  if (rep.valley == null) rep.valley = m;
+  if (rep.state === "low") {
+    if (m < rep.valley) rep.valley = m; else rep.valley += (m - rep.valley) * 0.005;   // lembah boleh bergeser perlahan
+    if (m - rep.valley >= amp) { rep.state = "high"; rep.peak = m; rep.upAt = now; rep.compThis = comp; }
+  } else {
+    if (m > rep.peak) rep.peak = m;
+    if (comp) rep.compThis = true;
+    if (m <= rep.peak - ret * (rep.peak - rep.valley)) {
+      rep.state = "low";
+      if (now - rep.upAt >= minMs) {
+        rep.count++; rep.lastPeak = rep.peak;
+        rep.maxPeak = rep.maxPeak == null ? rep.peak : Math.max(rep.maxPeak, rep.peak);
+        if (rep.compThis) rep.compReps++;
+        const tgt = +$("targetDeg").value;
+        if (tgt && rep.peak >= tgt) rep.hitTarget++;
+        speak(rep.compThis ? `${rep.count}. Badan tetap tegak ya` : (tgt && rep.peak < tgt ? `${rep.count}. Sedikit lebih tinggi` : String(rep.count)));
+      }
+      rep.valley = m;
+    }
+  }
+}
+function speak(t) {
+  if (!$("voice").checked || !("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(t); u.lang = "id-ID";
+  const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.toLowerCase().startsWith("id")); if (v) u.voice = v;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+
+// ---------- Cek kesiapan: cahaya, ketajaman, framing, jarak, kemiringan HP ----------
+const sc = document.createElement("canvas"); sc.width = 160; sc.height = 120;
+const sctx = sc.getContext("2d", { willReadFrequently: true });
+function imageStats(l) {
+  const W = 160, H = 120;
+  sctx.drawImage(video, 0, 0, W, H);
+  const d = sctx.getImageData(0, 0, W, H).data;
+  const g = new Float32Array(W * H); let sum = 0;
+  for (let i = 0; i < W * H; i++) { g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]; sum += g[i]; }
+  const mean = sum / (W * H);
+  let ls = 0, lq = 0, n = 0;
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    const i = y * W + x, v = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - W] - g[i + W];
+    ls += v; lq += v * v; n++;
+  }
+  const sharp = lq / n - (ls / n) ** 2;
+  let personMean = NaN;
+  if (l) {
+    const ids = [J.LS, J.RS, J.LH, J.RH].filter((i) => (l[i].visibility ?? 0) > 0.3);
+    if (ids.length >= 2) {
+      const xs = ids.map((i) => l[i].x), ys = ids.map((i) => l[i].y);
+      const x0 = Math.max(0, Math.floor(Math.min(...xs) * W)), x1 = Math.min(W - 1, Math.ceil(Math.max(...xs) * W));
+      const y0 = Math.max(0, Math.floor(Math.min(...ys) * H)), y1 = Math.min(H - 1, Math.ceil(Math.max(...ys) * H));
+      let s = 0, c = 0; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { s += g[y * W + x]; c++; }
+      if (c > 20) personMean = s / c;
+    }
+  }
+  return { mean, sharp, personMean };
+}
+function phoneRoll() {
+  if (!orient) return null;
+  const a = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+  return Math.abs(a % 180 === 0 ? orient.gamma : orient.beta);
+}
+function readiness(l, nPeople, which) {
+  const items = []; let ok = true;
+  const add = (pass, text, fix) => { items.push(`<div class="${pass ? "ok" : "bad"}">${pass ? "✓" : "✗"} ${text}${pass ? "" : " — " + fix}</div>`); if (!pass) ok = false; };
+  const st = lastStats;
+  if (st) {
+    add(st.mean >= 60 && st.mean <= 215, `Cahaya (${st.mean.toFixed(0)})`, st.mean < 60 ? "ruangan terlalu gelap, nyalakan lampu" : "terlalu silau");
+    const backlit = !Number.isNaN(st.personMean) && st.mean > 90 && st.personMean / st.mean < 0.65;
+    add(!backlit, "Tidak membelakangi cahaya", "jangan duduk membelakangi jendela/lampu");
+    add(st.sharp >= 25, `Ketajaman gambar (${st.sharp.toFixed(0)})`, "lensa kotor/buram atau kamera goyang");
+  }
+  if (!l) { add(false, "Orang terdeteksi", "masuk ke dalam bingkai kamera"); }
+  else {
+    const s = SIDE[which];
+    const need = [J.NOSE, J.LS, J.RS, s.E, s.W];
+    const inFrame = need.every((i) => l[i].x > 0.02 && l[i].x < 0.98 && l[i].y > 0.02 && l[i].y < 0.98 && (l[i].visibility ?? 0) >= 0.5);
+    add(inFrame, "Kepala, bahu, dan lengan terlihat utuh", "mundur atau atur posisi HP");
+    const hipVis = Math.min(l[J.LH].visibility ?? 0, l[J.RH].visibility ?? 0);
+    items.push(`<div class="${hipVis >= 0.5 ? "ok" : "mid"}">${hipVis >= 0.5 ? "✓" : "!"} Pinggul ${hipVis >= 0.5 ? "terlihat" : "kurang terlihat — sudut bahu memakai acuan vertikal, deteksi badan miring nonaktif"}</div>`);
+    const sw = Math.abs(l[J.LS].x - l[J.RS].x);                    // ukuran tubuh relatif bingkai → tidak bergantung FOV kamera
+    add(sw >= 0.12 && sw <= 0.45, `Jarak ke kamera (lebar bahu ${(sw * 100).toFixed(0)}% bingkai)`, sw < 0.12 ? "maju mendekat" : "mundur menjauh");
+    items.push(`<div class="${nPeople > 1 ? "mid" : "ok"}">${nPeople > 1 ? "! Ada " + nPeople + " orang — mengunci orang yang sedang dilacak" : "✓ Hanya satu orang"}</div>`);
+  }
+  const roll = phoneRoll();
+  if (roll != null) add(roll <= 8, `HP tegak (miring ${roll.toFixed(0)}°)`, "luruskan posisi HP");
+  else items.push(`<div class="mid">• Sensor kemiringan tidak tersedia (laptop) — pastikan kamera lurus</div>`);
+  $("ready").innerHTML = items.join("");
+  $("readyBadge").textContent = ok ? "SIAP" : "BELUM SIAP";
+  $("readyBadge").className = ok ? "bgok" : "bgbad";
+}
+
+// ---------- Setup ----------
+async function initLandmarker() {
+  setStatus(`Memuat model ${$("model").value} (${$("delegate").value})…`);
+  if (!vision) vision = await FilesetResolver.forVisionTasks(WASM);
+  if (landmarker) { try { landmarker.close(); } catch (_) {} landmarker = null; }
+  const delegate = $("delegate").value;
+  try {
+    landmarker = await PoseLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODELS[$("model").value], delegate },
+      runningMode: "VIDEO", numPoses: 2,
+      minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+    });
+  } catch (e) {
+    if (delegate === "GPU") { $("delegate").value = "CPU"; setStatus("GPU gagal, beralih ke CPU…"); return initLandmarker(); }
+    throw e;
+  }
+  lastVideoTime = -1; errCount = 0; modelLoadedAt = performance.now(); fps = 0; lastFrameT = 0;
+  setStatus(`Model siap: ${$("model").value} / ${$("delegate").value}`);
+}
+async function startCamera() {
+  if (stream) stream.getTracks().forEach((t) => t.stop());
+  const facing = $("facing").value;
+  stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 } } });
+  video.srcObject = stream; await video.play();
+  $("placeholder").style.display = "none";
+  video.classList.toggle("mirror", facing === "user"); canvas.classList.toggle("mirror", facing === "user");
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const track = stream.getVideoTracks()[0];
+  track.onended = () => { setStatus("⚠ Kamera terputus (dipakai aplikasi lain?). Tekan Mulai lagi."); running = false; $("btnStart").disabled = false; $("btnStart").textContent = "▶ Mulai lagi"; };
+}
+async function keepAwake() { try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (_) {} }
+async function enableOrientation() {
+  try {
+    if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+      if ((await DeviceOrientationEvent.requestPermission()) !== "granted") return;
+    }
+    window.addEventListener("deviceorientation", (e) => { if (e.beta != null && e.gamma != null) orient = { beta: e.beta, gamma: e.gamma }; });
+  } catch (_) {}
+}
+
+// ---------- Loop utama ----------
+function loop() {
+  if (!running) return;
+  requestAnimationFrame(loop);
+  if (paused || !landmarker || video.readyState < 2 || video.currentTime === lastVideoTime) return;
+  const now = performance.now(), cap = +$("fpsCap").value;
+  if (cap && now - lastDetect < 1000 / cap - 3) return;
+  lastVideoTime = video.currentTime; lastDetect = now;
+  let res;
+  try { res = landmarker.detectForVideo(video, now); }
+  catch (e) {
+    errCount++; updateErr();
+    if (errCount >= 3 && $("delegate").value === "GPU") { $("delegate").value = "CPU"; initLandmarker(); }
+    return;
+  }
+  const t1 = performance.now();
+  infMs = infMs ? infMs * 0.9 + (t1 - now) * 0.1 : t1 - now;
+  if (lastFrameT) { const inst = 1000 / (t1 - lastFrameT); fps = fps ? fps * 0.9 + inst * 0.1 : inst; }
+  lastFrameT = t1;
+  const idx = pickPose(res);
+  render(res, idx);
+  processResult(res, idx, t1);
+}
+
+function render(res, idx) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  (res.landmarks || []).forEach((l, i) => {
+    const main = i === idx;
+    drawer.drawConnectors(l, PoseLandmarker.POSE_CONNECTIONS, { color: main ? "#38bdf8" : "#47556988", lineWidth: main ? 3 : 2 });
+    if (main) {
+      drawer.drawLandmarks(l, { radius: 3, color: "#f472b6", fillColor: "#f472b6" });
+      const s = SIDE[$("metric").value];
+      drawer.drawLandmarks([l[s.S], l[s.E], s.kind === "siku" ? l[s.W] : l[s.H]], { radius: 8, color: "#facc15", fillColor: "#facc15" });
+    }
+  });
+}
+
+function processResult(res, idx, now) {
+  $("fps").textContent = `${fmt(fps, 1)} / ${fmt(infMs, 1)} ms`;
+  setCls($("fps"), fps >= 15 ? "ok" : fps >= 10 ? "mid" : "bad");
+  const nPeople = (res.landmarks || []).length;
+  $("people").textContent = nPeople; setCls($("people"), nPeople === 1 ? "ok" : nPeople > 1 ? "mid" : "bad");
+  const which = $("metric").value;
+  const l = idx >= 0 ? res.landmarks[idx] : null;
+  const w = idx >= 0 && res.worldLandmarks ? res.worldLandmarks[idx] : null;
+
+  if (now - lastStatsT > 500) { lastStats = imageStats(l); lastStatsT = now; readiness(l, nPeople, which); }
+  if (!l) { $("angle").textContent = "–"; $("vis").textContent = "tidak ada orang"; setCls($("vis"), "bad"); $("warn").style.display = "none"; compSince = null; return; }
+
+  const s = SIDE[which];
+  const armIds = s.kind === "siku" ? [s.S, s.E, s.W] : [s.S, s.E];
+  const vis = Math.min(...armIds.map((i) => l[i].visibility ?? 0));
+  const hipVis = Math.min(l[J.LH].visibility ?? 0, l[J.RH].visibility ?? 0);
+  const { val: raw, ref } = computeMetric(l, w, which);
+  const a = Math.min(1, Math.max(0.05, +$("alpha").value || 0.35));
+  smooth = (smooth == null || Number.isNaN(smooth)) ? raw : smooth * (1 - a) + raw * a;
+  const p = posture(l, which);
+
+  // --- kalibrasi
+  if (calib) {
+    calib.m.push(smooth); calib.lean.push(p.lean); calib.tilt.push(p.tilt); calib.shrug.push(p.shrugRatio);
+    setStatus(`Kalibrasi: duduk tegak & rileks, lengan istirahat… ${Math.max(0, Math.ceil((calib.until - now) / 1000))} dtk`);
+    if (now >= calib.until) {
+      base = { m: median(calib.m), lean: median(calib.lean), tilt: median(calib.tilt), shrug: median(calib.shrug), which };
+      calib = null; rep = freshRep(); rep.valley = base.m;
+      $("calibInfo").textContent = `istirahat ${fmt(base.m)}°, badan ${fmt(base.lean, 1)}°, bahu ${fmt(base.tilt, 1)}°`;
+      setCls($("calibInfo"), "ok"); setStatus("Kalibrasi selesai. Silakan mulai gerakan.");
+    }
+  }
+
+  // --- kompensasi relatif terhadap kalibrasi (tanpa kalibrasi: relatif terhadap 0)
+  const b = base && base.which === which ? base : { lean: 0, tilt: 0, shrug: NaN };
+  const dLean = Number.isNaN(p.lean) ? NaN : Math.abs(p.lean - (Number.isNaN(b.lean) ? 0 : b.lean));
+  const dTilt = Math.abs(p.tilt - (Number.isNaN(b.tilt) ? 0 : b.tilt));
+  const dShrug = (s.kind === "bahu" && !Number.isNaN(b.shrug) && !Number.isNaN(p.shrugRatio) && b.shrug > 0) ? (b.shrug - p.shrugRatio) / b.shrug * 100 : NaN;
+  const reasons = [];
+  if (dLean > +$("thLean").value) reasons.push("badan miring");
+  if (dTilt > +$("thTilt").value) reasons.push("bahu miring");
+  if (dShrug > +$("thShrug").value) reasons.push("bahu terangkat");
+  if (reasons.length && rep.state === "high") { if (compSince == null) compSince = now; } else compSince = null;
+  const comp = compSince != null && now - compSince >= +$("persistMs").value;
+
+  if (vis >= 0.5 && !calib) updateRep(smooth, comp, now);
+
+  // --- UI
+  $("angle").textContent = fmt(smooth); setCls($("angle"), vis >= 0.5 ? "big" : "big bad");
+  $("metricLabel").textContent = LABEL[which] + " (°)";
+  $("refUsed").textContent = s.kind === "bahu" ? ref : "tidak perlu (siku)";
+  $("reps").textContent = rep.count;
+  $("target").textContent = `${rep.hitTarget}/${rep.count}`;
+  $("lastPeak").textContent = fmt(rep.lastPeak) + "°";
+  $("maxPeak").textContent = fmt(rep.maxPeak) + "°";
+  $("compReps").textContent = rep.compReps;
+  $("repState").textContent = calib ? "kalibrasi…" : rep.state === "high" ? `naik (puncak ${fmt(rep.peak)}°)` : `istirahat (lembah ${fmt(rep.valley)}°)`;
+  $("vis").textContent = fmt(vis, 2); setCls($("vis"), vis >= 0.8 ? "ok" : vis >= 0.5 ? "mid" : "bad");
+  $("hipVis").textContent = fmt(hipVis, 2); setCls($("hipVis"), hipVis >= 0.5 ? "ok" : "mid");
+  $("lean").textContent = Number.isNaN(dLean) ? "tak terukur (pinggul)" : fmt(dLean, 1) + "°"; setCls($("lean"), dLean > +$("thLean").value ? "bad" : "ok");
+  $("tilt").textContent = fmt(dTilt, 1) + "°"; setCls($("tilt"), dTilt > +$("thTilt").value ? "bad" : "ok");
+  $("shrug").textContent = s.kind !== "bahu" ? "–" : Number.isNaN(dShrug) ? "kalibrasi dulu" : fmt(dShrug, 0) + "%";
+  setCls($("shrug"), dShrug > +$("thShrug").value ? "bad" : "ok");
+  $("warn").style.display = comp ? "block" : "none";
+  if (comp) $("warn").textContent = "⚠ Kompensasi: " + reasons.join(", ");
+
+  if (log.length < LOG_MAX) {
+    log.push([((now - sessionT0) / 1000).toFixed(3), fps.toFixed(1), infMs.toFixed(1), $("model").value, $("delegate").value, which, ref,
+      raw.toFixed(2), smooth.toFixed(2), vis.toFixed(3), hipVis.toFixed(3), fmt(dLean, 2), fmt(dTilt, 2), fmt(dShrug, 1),
+      comp ? 1 : 0, rep.count, rep.state, nPeople, lastStats ? lastStats.mean.toFixed(0) : "", lastStats ? lastStats.sharp.toFixed(0) : "",
+      battery ? Math.round(battery.level * 100) : ""]);
+  }
+  if (stab) {
+    stab.raw.push(raw); stab.sm.push(smooth); stab.fps.push(fps); stab.vis.push(vis);
+    setStatus(`Uji stabilitas: tahan diam… ${Math.max(0, Math.ceil((stab.until - now) / 1000))} dtk`);
+    if (now >= stab.until) finishStab();
+  }
+}
+
+// ---------- Ketahanan: monitor per detik + turun model otomatis ----------
+function updateErr() { $("errs").textContent = `${errCount} / ${downgrades}`; }
+setInterval(() => {
+  if (!running) return;
+  const now = performance.now();
+  if (!paused) fpsHist.push(fps);
+  const el = (now - sessionT0) / 1000;
+  $("elapsed").textContent = `${Math.floor(el / 60)}m ${Math.floor(el % 60)}d`;
+  const avg = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : NaN;
+  const first = avg(fpsHist.slice(0, 60)), last = avg(fpsHist.slice(-60));
+  $("fpsFirst").textContent = fmt(first, 1); $("fpsLast").textContent = fmt(last, 1);
+  if (fpsHist.length > 90) {
+    const drop = (1 - last / first) * 100;
+    $("fpsDrop").textContent = fmt(drop, 0) + "%"; setCls($("fpsDrop"), drop < 30 ? "ok" : "bad");
+  }
+  if (battery) $("battery").textContent = `${Math.round(battery.level * 100)}%${battery.charging ? " (mengisi)" : ""}`;
+  // turunkan model bila 5 detik terakhir < 12 FPS
+  const recent = avg(fpsHist.slice(-5));
+  const order = ["heavy", "full", "lite"], cur = $("model").value;
+  if ($("autoDown").checked && !paused && now - modelLoadedAt > 8000 && recent < 12 && cur !== "lite") {
+    $("model").value = order[order.indexOf(cur) + 1]; downgrades++; updateErr();
+    setStatus(`FPS rendah (${recent.toFixed(1)}) → otomatis turun ke model ${$("model").value}`);
+    initLandmarker();
+  }
+}, 1000);
+
+// ---------- Uji stabilitas ----------
+function stats(arr) {
+  const v = arr.filter((x) => !Number.isNaN(x)); const n = v.length; if (!n) return null;
+  const mean = v.reduce((s, x) => s + x, 0) / n, sd = Math.sqrt(v.reduce((s, x) => s + (x - mean) ** 2, 0) / n);
+  return { n, mean, sd, min: Math.min(...v), max: Math.max(...v) };
+}
+function finishStab() {
+  const r = stats(stab.raw), s = stats(stab.sm), f = stats(stab.fps), v = stats(stab.vis); stab = null;
+  if (!r) { $("stabOut").textContent = "Tidak ada data."; return; }
+  const verdict = s.sd < 3 ? "LOLOS (SD < 3°)" : s.sd < 5 ? "CUKUP (SD 3–5°)" : "GAGAL (SD ≥ 5°)";
+  $("stabOut").textContent =
+`${LABEL[$("metric").value]} · acuan ${$("refUsed").textContent} · ${$("model").value}/${$("delegate").value}
+Sampel   : ${r.n} frame
+Mentah   : rata2 ${r.mean.toFixed(1)}°  SD ${r.sd.toFixed(2)}°  rentang ${(r.max - r.min).toFixed(1)}°
+Halus    : rata2 ${s.mean.toFixed(1)}°  SD ${s.sd.toFixed(2)}°  rentang ${(s.max - s.min).toFixed(1)}°
+FPS      : rata2 ${f.mean.toFixed(1)} (min ${f.min.toFixed(1)})
+Keyakinan: rata2 ${v.mean.toFixed(2)} (min ${v.min.toFixed(2)})
+Hasil    : ${verdict}`;
+  setStatus("Uji stabilitas selesai.");
+}
+
+// ---------- CSV ----------
+function downloadCsv() {
+  const meta = [`# perangkat: ${navigator.userAgent.replace(/,/g, ";")}`, `# cpu_cores: ${navigator.hardwareConcurrency || "?"}`,
+    `# resolusi: ${video.videoWidth}x${video.videoHeight}`, `# kalibrasi: ${base ? JSON.stringify(base).replace(/,/g, ";") : "tidak"}`, `# waktu: ${new Date().toISOString()}`];
+  const head = "t_detik,fps,inferensi_ms,model,delegate,gerakan,acuan,sudut_mentah,sudut_halus,vis_lengan,vis_pinggul,d_badan,d_bahu,d_shrug_pct,kompensasi,repetisi,status,jumlah_orang,kecerahan,ketajaman,baterai_pct";
+  const blob = new Blob([meta.join("\n") + "\n" + head + "\n" + log.map((r) => r.join(",")).join("\n")], { type: "text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `uji-pose-v2-${Date.now()}.csv`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---------- Event ----------
+$("btnStart").onclick = async () => {
+  try {
+    $("btnStart").disabled = true;
+    await enableOrientation();               // iOS butuh izin dari klik pengguna
+    await startCamera(); await initLandmarker(); await keepAwake();
+    if (navigator.getBattery) { try { battery = await navigator.getBattery(); } catch (_) {} }
+    if (!running) { running = true; sessionT0 = performance.now(); fpsHist.length = 0; loop(); }
+    ["btnCalib", "btnStab", "btnReset", "btnCsv"].forEach((id) => ($(id).disabled = false));
+    $("btnStart").textContent = "● Berjalan";
+  } catch (e) {
+    $("btnStart").disabled = false;
+    setStatus(e && e.name === "NotAllowedError" ? "Izin kamera ditolak. Izinkan di pengaturan browser lalu muat ulang."
+      : e && e.name === "NotFoundError" ? "Kamera tidak ditemukan." : "Gagal memulai: " + (e && e.message ? e.message : e));
+  }
+};
+$("btnCalib").onclick = () => { calib = { until: performance.now() + 3000, m: [], lean: [], tilt: [], shrug: [] }; };
+$("btnStab").onclick = () => { stab = { until: performance.now() + 10000, raw: [], sm: [], fps: [], vis: [] }; };
+$("btnReset").onclick = () => { rep = freshRep(); if (base && base.which === $("metric").value) rep.valley = base.m; smooth = null; setStatus("Repetisi direset."); };
+$("btnCsv").onclick = downloadCsv;
+$("metric").onchange = () => { rep = freshRep(); smooth = null; base = null; $("calibInfo").textContent = "belum (gerakan berubah)"; setCls($("calibInfo"), "mid"); };
+$("ref").onchange = $("mode").onchange = () => { rep = freshRep(); smooth = null; };
+$("model").onchange = $("delegate").onchange = async () => { if (running) await initLandmarker(); };
+$("facing").onchange = async () => { if (running) { await startCamera(); lastVideoTime = -1; lockC = null; } };
+document.addEventListener("visibilitychange", () => {
+  paused = document.visibilityState !== "visible";
+  if (!paused) { lastFrameT = 0; if (running) keepAwake(); }
+});
+window.addEventListener("pagehide", () => { if (stream) stream.getTracks().forEach((t) => t.stop()); });
+$("secure").innerHTML = window.isSecureContext ? '<span class="ok">✓ HTTPS/localhost</span>' : '<span class="bad">✗ Bukan HTTPS — kamera diblokir</span>';
+</script>
+</body>
+</html>
