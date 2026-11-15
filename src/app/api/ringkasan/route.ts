@@ -7,6 +7,8 @@ import { VERSI_PROMPT } from "@/lib/ai/prompts";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+// Catatan: jangan tambahkan `export const runtime` — tidak kompatibel dengan cacheComponents
+// (Node.js sudah default). maxDuration tetap boleh.
 export const maxDuration = 30;
 
 const Body = z.object({

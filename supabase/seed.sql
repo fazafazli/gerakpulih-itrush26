@@ -1,7 +1,3 @@
--- GerakPulih - data demo untuk juri
--- SYARAT: buat dulu akun terapis demo di Dashboard → Authentication → Add user → email di bawah, centang "Auto Confirm User".
--- Aman dijalankan ulang: data demo lama dihapus dulu.
--- Link pasien demo : /mulai/demo-budi   (token = 'demo-budi')
 do $$
 declare
   v_terapis uuid;
@@ -10,7 +6,6 @@ declare
   v_sesi    uuid;
   v_hari    date;
   i         int;
-  -- 12 sesi selama ±3 minggu; nilai puncak "angkat ke samping" naik bertahap
   puncak    numeric[] := array[72,75,78,80,84,83,88,91,95,97,101,104];
   kompen    int[]     := array[3,3,3,2,2,2,2,1,1,1,1,1]; 
   offset_hr int[]     := array[20,19,18,17,15,14,13,12,10,9,8,7]; 
@@ -69,7 +64,7 @@ begin
     end if;
   end loop;
 
-  -- Ringkasan siap tampil 
+  -- Ringkasan 
   insert into public.ringkasan_ai (pasien_id, periode_mulai, periode_selesai, isi, sumber, model, hash_input)
   values (v_budi, current_date - 20, current_date - 7,
     jsonb_build_object(

@@ -1,5 +1,4 @@
 // Cek API key & daftar model yang bisa dipakai, lalu uji satu panggilan.
-// Jalankan:  node --env-file=.env.local scripts/cek-gemini.mjs
 import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY;
