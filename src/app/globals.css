@@ -63,6 +63,27 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Umpan balik ringan di layar latihan. Dimatikan otomatis oleh aturan prefers-reduced-motion di bawah. */
+@theme {
+  --animate-gp-pop: gp-pop 420ms cubic-bezier(0.2, 0.8, 0.2, 1.4);
+  --animate-gp-capai: gp-capai 900ms ease-out;
+  --animate-gp-masuk: gp-masuk 260ms ease-out;
+
+  @keyframes gp-pop {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @keyframes gp-capai {
+    0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--sukses) 55%, transparent); }
+    100% { box-shadow: 0 0 0 18px color-mix(in oklab, var(--sukses) 0%, transparent); }
+  }
+  @keyframes gp-masuk {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
 :root {
   /* Palet "Fresh Wellness Healthcare" (docs/DESAIN.md). Beberapa warna teks
      sedikit digelapkan agar kontras >= 4.5:1 di atas latar terang. */

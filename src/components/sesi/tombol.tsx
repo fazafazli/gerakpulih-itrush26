@@ -1,15 +1,15 @@
 import type { ComponentProps } from "react";
 import { OctagonX } from "lucide-react";
 
-/** Tombol layar pasien: tinggi ≥ 56px, huruf ≥ 18px (aturan UI/UX di AGENTS.md). */
+/** Tombol layar pasien: tinggi 64px, huruf 20px (patokan docs/DESAIN.md bagian 6). */
 const dasar =
-  "inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 text-lg font-bold transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-16 w-full items-center justify-center gap-2 rounded-xl px-5 text-xl font-bold transition-[background-color,transform] active:scale-[0.98] focus-visible:outline-3 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
 
 export function TombolUtama({ className = "", ...props }: ComponentProps<"button">) {
   return (
     <button
       type="button"
-      className={`${dasar} bg-[#0B5CAD] text-white hover:bg-[#08467F] focus-visible:outline-[#0B5CAD] ${className}`}
+      className={`${dasar} bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline-ring ${className}`}
       {...props}
     />
   );
@@ -19,7 +19,7 @@ export function TombolKedua({ className = "", ...props }: ComponentProps<"button
   return (
     <button
       type="button"
-      className={`${dasar} border-2 border-[#DDE4EB] bg-white text-[#0F1E2E] hover:bg-[#F4F7FA] focus-visible:outline-[#0B5CAD] ${className}`}
+      className={`${dasar} border-2 border-border bg-card text-foreground hover:bg-mint-pucat focus-visible:outline-ring ${className}`}
       {...props}
     />
   );
@@ -30,7 +30,7 @@ export function TombolBerhenti(props: Omit<ComponentProps<"button">, "children">
   return (
     <button
       type="button"
-      className={`${dasar} bg-[#B42318] text-white hover:bg-[#912018] focus-visible:outline-[#B42318]`}
+      className={`${dasar} bg-bahaya text-primary-foreground hover:bg-bahaya/90 focus-visible:outline-bahaya`}
       {...props}
     >
       <OctagonX aria-hidden className="size-6" />

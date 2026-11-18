@@ -1,6 +1,10 @@
 import { LM, keyakinan, sendiSisi, type Landmark, type Sisi } from "@/lib/pose/landmarks";
 
-export const WARNA_RANGKA = { normal: "#2E90FA", kompensasi: "#F79009", redup: "rgba(255,255,255,0.55)" } as const;
+/**
+ * Canvas tidak bisa membaca CSS variable, jadi warnanya ditulis di sini. Nilainya mengikuti token globals.css:
+ * normal = --teal-segar, kompensasi = --peringatan, titik = --card. Kontras tinggi di atas video.
+ */
+export const WARNA_RANGKA = { normal: "#14b8a6", kompensasi: "#d99024", redup: "rgba(255,255,255,0.55)", titik: "#ffffff" } as const;
 
 /**
  * Menggambar lengan yang dilatih + garis bahu di atas video (bukan seluruh 33 titik:
@@ -43,7 +47,7 @@ export function gambarRangka(
   for (const i of [s.bahu, s.siku, s.pergelangan]) {
     const p = titik(i);
     if (!p) continue;
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = WARNA_RANGKA.titik;
     ctx.beginPath();
     ctx.arc(p.x, p.y, tebal * 0.9, 0, Math.PI * 2);
     ctx.fill();

@@ -15,16 +15,16 @@ export function LayarSiapkan(props: {
     <div className="flex flex-col gap-5">
       <PenandaLangkah aktif={0} />
       <div>
-        <h1 className="text-[28px] font-extrabold leading-tight">Siapkan tempat latihan</h1>
-        <p className="mt-1 text-lg text-[#3D4C5C]">Cukup 4 hal. Panduan ini juga dibacakan.</p>
+        <h1 className="font-heading text-[30px] font-bold leading-tight">Siapkan tempat latihan</h1>
+        <p className="mt-1 text-xl text-muted-foreground">Cukup 4 hal. Panduan ini juga dibacakan.</p>
       </div>
 
       <ul className="flex flex-col gap-3">
         {PANDUAN_SIAPKAN.map((teks, i) => {
           const Ikon = IKON[i];
           return (
-            <li key={teks} className="flex items-center gap-4 rounded-2xl border border-[#DDE4EB] bg-white p-4 text-lg font-semibold">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF2FB] text-[#0B5CAD]">
+            <li key={teks} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 text-xl font-semibold leading-snug">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-mint text-primary">
                 <Ikon aria-hidden className="size-6" />
               </span>
               {teks}
@@ -33,13 +33,13 @@ export function LayarSiapkan(props: {
         })}
       </ul>
 
-      <p className="flex items-start gap-2 text-[15px] text-[#3D4C5C]">
-        <ShieldCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-[#067647]" />
+      <p className="flex items-start gap-2 text-lg text-muted-foreground">
+        <ShieldCheck aria-hidden className="mt-0.5 size-6 shrink-0 text-sukses-teks" />
         Video hanya diproses di HP ini. Tidak direkam dan tidak dikirim ke mana pun.
       </p>
 
       {props.pesanGalat && (
-        <p role="alert" className="flex items-start gap-2 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-4 text-lg text-[#912018]">
+        <p role="alert" className="flex items-start gap-2 rounded-2xl border border-bahaya/30 bg-bahaya-bg p-4 text-lg text-bahaya">
           <TriangleAlert aria-hidden className="mt-1 size-5 shrink-0" />
           {props.pesanGalat}
         </p>

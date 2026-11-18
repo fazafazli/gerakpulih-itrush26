@@ -366,14 +366,14 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
   const p = iAktif != null ? program[iAktif] : null;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-5 text-[#0F1E2E]">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-5 text-foreground">
       <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setSuaraAktif(!suaraAktif)}
           aria-pressed={suaraAktif}
           aria-label={suaraAktif ? "Matikan suara panduan" : "Nyalakan suara panduan"}
-          className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-[15px] font-semibold text-[#3D4C5C] hover:bg-[#F4F7FA]"
+          className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-muted-foreground hover:bg-muted"
         >
           {suaraAktif ? <Volume2 aria-hidden className="size-5" /> : <VolumeX aria-hidden className="size-5" />}
           {suaraAktif ? "Suara nyala" : "Suara mati"}
@@ -392,7 +392,7 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
       {/* Video selalu ada di DOM (tersembunyi saat tidak dipakai) agar stream kamera tidak terputus antar-tahap. */}
       <div className={kameraTampil ? "flex flex-col gap-4" : "hidden"}>
         <PenandaLangkah aktif={tahap.jenis === "latihan" ? 2 : 1} />
-        <div className="relative w-full overflow-hidden rounded-3xl bg-[#0F1E2E]" style={{ aspectRatio: rasioVideo }}>
+        <div className="relative w-full overflow-hidden rounded-3xl bg-foreground" style={{ aspectRatio: rasioVideo }}>
           <video
             ref={videoRef}
             onLoadedMetadata={saatMetadata}
@@ -407,7 +407,7 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
           )}
           {tahap.jenis === "latihan" && p && <OverlayLatihan t={tampil} target={p.target} repetisi={p.repetisi} />}
           {statusKamera === "terputus" && (
-            <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/75 p-6 text-center text-white">
+            <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/75 p-6 text-center text-primary-foreground">
               <TriangleAlert aria-hidden className="size-12" />
               <p className="text-xl font-bold">{PESAN_KAMERA.terputus}</p>
               <TombolUtama onClick={sambungUlang} className="max-w-xs">
@@ -418,8 +418,8 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
         </div>
 
         {pose.galat && (tahap.jenis === "cek" || tahap.jenis === "latihan") && (
-          <div role="alert" className="flex flex-col gap-3 rounded-2xl border border-[#FECDCA] bg-[#FEF3F2] p-4">
-            <p className="text-lg font-semibold text-[#912018]">{pose.galat}</p>
+          <div role="alert" className="flex flex-col gap-3 rounded-2xl border border-bahaya/30 bg-bahaya-bg p-4">
+            <p className="text-lg font-semibold text-bahaya">{pose.galat}</p>
             <TombolUtama onClick={pose.muatUlang}>
               <RefreshCw aria-hidden className="size-5" /> Muat ulang pendeteksi
             </TombolUtama>

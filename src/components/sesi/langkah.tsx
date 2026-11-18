@@ -1,27 +1,39 @@
-import { Check } from "lucide-react";
+import { Activity, ClipboardCheck, PartyPopper, ScanFace } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const LANGKAH = ["Siapkan", "Cek", "Latihan"] as const;
+/** Empat tahap dengan identitas visual masing-masing: ikon + warna + nama (bukan warna saja). */
+const TAHAP = [
+  { nama: "Siapkan", ikon: ClipboardCheck, pita: "bg-mint text-primary", isi: "bg-primary" },
+  { nama: "Cek posisi", ikon: ScanFace, pita: "bg-cyan-lembut text-biru", isi: "bg-biru" },
+  { nama: "Latihan", ikon: Activity, pita: "bg-primary text-primary-foreground", isi: "bg-primary" },
+  { nama: "Selesai", ikon: PartyPopper, pita: "bg-sukses-bg text-sukses-teks", isi: "bg-sukses" },
+] as const;
 
-/** Penanda tahap (1 Siapkan · 2 Cek · 3 Latihan) seperti di mockup. */
-export function PenandaLangkah({ aktif }: { aktif: 0 | 1 | 2 }) {
+export type IndeksTahap = 0 | 1 | 2 | 3;
+
+export function PenandaLangkah({ aktif }: { aktif: IndeksTahap }) {
+  const t = TAHAP[aktif];
+  const Ikon = t.ikon;
   return (
-    <ol className="flex items-center gap-2 text-[15px] font-semibold" aria-label="Tahap latihan">
-      {LANGKAH.map((nama, i) => {
-        const selesai = i < aktif;
-        const sekarang = i === aktif;
-        return (
-          <li key={nama} className="flex flex-1 items-center gap-2" aria-current={sekarang ? "step" : undefined}>
-            <span
-              className={`flex size-7 shrink-0 items-center justify-center rounded-full text-sm ${
-                selesai ? "bg-[#067647] text-white" : sekarang ? "bg-[#0B5CAD] text-white" : "bg-[#E7ECF1] text-[#3D4C5C]"
-              }`}
-            >
-              {selesai ? <Check aria-hidden className="size-4" /> : i + 1}
+    <div className="flex flex-col gap-2.5">
+      <ol className="grid grid-cols-4 gap-1.5" aria-label="Tahap latihan">
+        {TAHAP.map((x, i) => (
+          <li key={x.nama} aria-current={i === aktif ? "step" : undefined} className="flex flex-col">
+            <span className={cn("h-2 rounded-full transition-colors", i <= aktif ? x.isi : "bg-muted")} />
+            <span className="sr-only">
+              {x.nama}
+              {i < aktif ? " (selesai)" : i === aktif ? " (sekarang)" : ""}
             </span>
-            <span className={sekarang ? "text-[#0F1E2E]" : "text-[#5B6B7C]"}>{nama}</span>
           </li>
-        );
-      })}
-    </ol>
+        ))}
+      </ol>
+      <p className={cn("flex w-fit items-center gap-2 rounded-full py-1.5 pr-4 pl-2 text-lg font-bold animate-gp-masuk", t.pita)}>
+        <Ikon aria-hidden className="size-6" />
+        <span>
+          <span className="font-semibold opacity-80">Tahap {aktif + 1}/4 · </span>
+          {t.nama}
+        </span>
+      </p>
+    </div>
   );
 }
