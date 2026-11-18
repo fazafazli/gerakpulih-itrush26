@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 import type { Sisi } from "@/lib/pose/landmarks";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -28,6 +29,9 @@ export type PasienSaatIni = {
 };
 
 export const getPasienSaatIni = cache(async (): Promise<PasienSaatIni | null> => {
+  // Selalu per permintaan: verifikasi cookie memakai jam sekarang (Date.now) yang tidak boleh dipanggil saat
+  // runtime prefetch (partialPrefetching). Sama seperti getTerapisSaatIni.
+  await connection();
   const isi = verifikasiSesi((await cookies()).get(COOKIE_PASIEN)?.value, rahasia());
   if (!isi) return null;
   const { data } = await createAdminClient()
