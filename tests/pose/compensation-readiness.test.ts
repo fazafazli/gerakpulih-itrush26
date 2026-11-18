@@ -109,3 +109,25 @@ describe("pilihOrang", () => {
     expect(pilihOrang([], null).indeks).toBe(-1);
   });
 });
+
+describe("aturan membelakangi cahaya (dilonggarkan)", () => {
+  const dasar = { jumlahOrang: 1, gerakan: GERAKAN.angkat_samping, sisi: "kanan" as const };
+  const terang = (kecerahanTubuh: number) => ({ kecerahan: 160, ketajaman: 60, kecerahanTubuh });
+
+  it("tidak menunda latihan bila pose tetap terbaca (hanya info)", () => {
+    const h = nilaiKesiapan({ ...dasar, statistik: terang(60), landmark: tubuh() });
+    expect(h.siap).toBe(true);
+    expect(h.item.find((i) => i.kode === "membelakangi_cahaya")?.status).toBe("info");
+  });
+
+  it("menghalangi bila backlight membuat lengan tidak terbaca", () => {
+    const h = nilaiKesiapan({ ...dasar, statistik: terang(60), landmark: tubuh({ keyakinan: 0.2 }) });
+    expect(h.siap).toBe(false);
+    expect(h.item.find((i) => i.kode === "membelakangi_cahaya")?.status).toBe("gagal");
+  });
+
+  it("tubuh sedikit lebih gelap (baju gelap) bukan backlight", () => {
+    const h = nilaiKesiapan({ ...dasar, statistik: terang(95), landmark: tubuh() });
+    expect(h.item.some((i) => i.kode === "membelakangi_cahaya")).toBe(false);
+  });
+});

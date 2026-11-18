@@ -11,7 +11,10 @@ export type StatistikGambar = {
   kecerahanTubuh: number;
 };
 
-/** Statistik dari gambar kecil (mis. 160×120 RGBA dari canvas). */
+/**
+ * Statistik dari gambar kecil (mis. 160×120 RGBA dari canvas).
+ * Fungsi murni: bisa diuji tanpa kamera.
+ */
 export function hitungStatistikGambar(
   rgba: Uint8ClampedArray,
   lebar: number,
@@ -62,7 +65,7 @@ export function hitungStatistikGambar(
   return { kecerahan: total / n, ketajaman, kecerahanTubuh };
 }
 
-/** Kemiringan HP (derajat) dari DeviceOrientation */
+/** Kemiringan HP (derajat) dari DeviceOrientation, memperhitungkan potret/lanskap. */
 export function kemiringanHp(beta: number, gamma: number, sudutLayar: number): number {
   return Math.abs(Math.abs(sudutLayar) % 180 === 0 ? gamma : beta);
 }
@@ -72,14 +75,21 @@ export type KodeKesiapan = "orang" | "cahaya" | "membelakangi_cahaya" | "bingkai
 export type ItemKesiapan = {
   kode: KodeKesiapan;
   status: "lolos" | "gagal" | "info";
+  /** Kalimat singkat untuk pasien (juga dibacakan). */
   pesan: string;
 };
 
-/** Ambang awal hasil uji teknis */
+/** Ambang awal hasil uji teknis; sesuaikan bila perlu. */
 export const AMBANG_KESIAPAN = {
   kecerahanMin: 60,
   kecerahanMaks: 215,
-  rasioTubuhMinimal: 0.65,
+  /**
+   * Backlight: tubuh jauh lebih gelap dari rata-rata gambar. Dilonggarkan dari 0.65 → 0.5
+   * (uji lapangan: 0.65 sering salah deteksi pada baju gelap / dinding putih).
+   */
+  rasioTubuhMinimal: 0.5,
+  /** Backlight hanya dinilai bila gambar memang terang (ada sumber cahaya kuat). */
+  kecerahanBacklightMin: 110,
   ketajamanMin: 25,
   lebarBahuMin: 0.12,
   lebarBahuMaks: 0.45,
@@ -111,11 +121,6 @@ export function nilaiKesiapan(args: {
       "Cahaya cukup",
       statistik.kecerahan < A.kecerahanMin ? "Ruangan terlalu gelap, nyalakan lampu" : "Terlalu silau, kurangi cahaya",
     );
-    const membelakangi =
-      !Number.isNaN(statistik.kecerahanTubuh) &&
-      statistik.kecerahan > 90 &&
-      statistik.kecerahanTubuh / statistik.kecerahan < A.rasioTubuhMinimal;
-    tambah("membelakangi_cahaya", !membelakangi, "Tidak membelakangi cahaya", "Jangan membelakangi jendela atau lampu");
     tambah("ketajaman", statistik.ketajaman >= A.ketajamanMin, "Gambar jelas", "Gambar buram, bersihkan lensa kamera");
   }
 
@@ -130,7 +135,7 @@ export function nilaiKesiapan(args: {
     });
     tambah("bingkai", utuh, "Kepala dan lengan terlihat", "Mundur sedikit sampai kepala dan tangan terlihat");
 
-    // Jarak dinilai dari lebar bahu relatif bingkai
+    // Jarak dinilai dari lebar bahu relatif bingkai → tidak bergantung FOV kamera.
     const lebarBahu = Math.abs(landmark[LM.BAHU_KIRI].x - landmark[LM.BAHU_KANAN].x);
     tambah(
       "jarak",
@@ -144,6 +149,21 @@ export function nilaiKesiapan(args: {
       item.push({ kode: "pinggul", status: "info", pesan: "Pinggul kurang terlihat, pengukuran tetap berjalan" });
     }
     if (jumlahOrang > 1) item.push({ kode: "banyak_orang", status: "info", pesan: "Ada orang lain di kamera, pasien tetap dikunci" });
+  }
+
+  // Backlight hanya MENGHALANGI bila memang merusak deteksi (lengan/kepala tidak terbaca).
+  // Bila pose tetap terbaca jelas, cukup saran "info" — tidak menunda latihan (mengurangi false positive).
+  if (statistik && !Number.isNaN(statistik.kecerahanTubuh)) {
+    const membelakangi =
+      statistik.kecerahan >= A.kecerahanBacklightMin && statistik.kecerahanTubuh / statistik.kecerahan < A.rasioTubuhMinimal;
+    const poseTerbaca = item.some((i) => i.kode === "bingkai" && i.status === "lolos");
+    if (membelakangi) {
+      item.push(
+        poseTerbaca
+          ? { kode: "membelakangi_cahaya", status: "info", pesan: "Cahaya dari belakang, tapi gerakan tetap terbaca" }
+          : { kode: "membelakangi_cahaya", status: "gagal", pesan: "Jangan membelakangi jendela atau lampu" },
+      );
+    }
   }
 
   if (args.kemiringanHp != null) {

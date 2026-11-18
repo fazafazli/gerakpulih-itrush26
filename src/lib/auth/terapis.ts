@@ -1,11 +1,15 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export type TerapisSaatIni = { id: string; nama: string; institusi: string | null; email: string | null };
 
 export const getTerapisSaatIni = cache(async (): Promise<TerapisSaatIni | null> => {
+  // Data terapis selalu per permintaan. Tanpa ini, runtime prefetch (partialPrefetching) ikut menjalankan
+  // pemeriksaan sesi Supabase yang memakai Date.now() → galat "unstable value" saat prerender.
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },
