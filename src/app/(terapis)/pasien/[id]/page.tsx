@@ -1,4 +1,4 @@
-import { ArrowLeft, CircleAlert, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, CircleAlert, ShieldAlert, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -12,6 +12,7 @@ import { LencanaStatus } from "@/components/terapis/lencana-status";
 import { MemuatHalaman } from "@/components/terapis/memuat";
 import { buttonVariants } from "@/components/ui/button";
 import { getTerapisSaatIni } from "@/lib/auth/terapis";
+import { perluCatatPersetujuan } from "@/lib/pasien/persetujuan";
 import { GERAKAN, isKodeGerakan } from "@/lib/pose/exercises";
 import { dataDetailPasien } from "@/lib/terapis/data";
 import { gerakanTercatat, kepatuhanHarian, labelRelatif, ringkasanUsang, seriProgres, statusPasien } from "@/lib/terapis/olah";
@@ -61,6 +62,7 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
               {pasien.is_demo && " · data contoh"}
             </p>
             {pasien.catatan && <p className="max-w-prose text-sm">{pasien.catatan}</p>}
+            <StatusPersetujuan pada={pasien.persetujuan_pada} versi={pasien.persetujuan_versi} />
           </div>
           <Link href={`/pasien/${pasien.id}/program`} className={cn(buttonVariants({ variant: "outline" }), "h-11 gap-2 bg-card px-4 text-sm")}>
             <SlidersHorizontal aria-hidden className="size-4" /> Atur program
@@ -152,5 +154,25 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
         </div>
       </main>
     </>
+  );
+}
+
+const TANGGAL_SETUJU = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
+
+/** Bukti persetujuan privasi pasien (diisi server saat pasien menekan "Saya setuju"). */
+function StatusPersetujuan({ pada, versi }: { pada: string | null; versi: string | null }) {
+  if (!pada) {
+    return (
+      <p className="flex items-center gap-1.5 text-sm font-medium text-peringatan-teks">
+        <ShieldAlert aria-hidden className="size-4" /> Belum menyetujui halaman privasi
+      </p>
+    );
+  }
+  return (
+    <p className="flex items-center gap-1.5 text-sm font-medium text-sukses-teks">
+      <ShieldCheck aria-hidden className="size-4" />
+      Persetujuan privasi: {TANGGAL_SETUJU.format(new Date(pada))} ({versi ?? "-"})
+      {perluCatatPersetujuan(versi) && <span className="text-peringatan-teks"> · versi lama, akan diminta ulang</span>}
+    </p>
   );
 }

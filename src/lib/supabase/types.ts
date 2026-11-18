@@ -99,6 +99,8 @@ export type Database = {
           id: string
           is_demo: boolean
           nama_tampilan: string
+          persetujuan_pada: string | null
+          persetujuan_versi: string | null
           sisi_dilatih: string
           terakhir_aktif: string | null
           terapis_id: string
@@ -111,6 +113,8 @@ export type Database = {
           id?: string
           is_demo?: boolean
           nama_tampilan: string
+          persetujuan_pada?: string | null
+          persetujuan_versi?: string | null
           sisi_dilatih: string
           terakhir_aktif?: string | null
           terapis_id: string
@@ -123,6 +127,8 @@ export type Database = {
           id?: string
           is_demo?: boolean
           nama_tampilan?: string
+          persetujuan_pada?: string | null
+          persetujuan_versi?: string | null
           sisi_dilatih?: string
           terakhir_aktif?: string | null
           terapis_id?: string

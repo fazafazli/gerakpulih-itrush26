@@ -7,7 +7,8 @@
 --   kemarin. Jadi kepatuhan, "sesi terakhir", dan grafik selalu wajar kapan pun seed dijalankan.
 -- * Pasien non-demo tidak disentuh.
 --
--- Prasyarat: akun auth demo-terapis@example.com sudah dibuat (Authentication → Add user).
+-- Prasyarat: akun auth demo-terapis@example.com sudah dibuat (Authentication → Add user), dan migrasi
+-- 20261119000000_persetujuan_pasien.sql sudah di-push (kolom persetujuan_*).
 do $$
 declare
   v_terapis  uuid;
@@ -39,15 +40,20 @@ begin
    where terapis_id = v_terapis and is_demo and token_hash not in (hash_budi, hash_siti);
 
   -- ---------- Pak Budi: pasien utama demo ----------
-  insert into public.pasien (terapis_id, nama_tampilan, sisi_dilatih, token_hash, is_demo, aktif, catatan)
-  values (v_terapis, 'Pak Budi', 'kanan', hash_budi, true, true, 'Pasca-stroke, kelemahan sisi kanan. Data contoh.')
+  -- Pak Budi sudah menyetujui halaman privasi sesaat sebelum sesi pertama (14 hari lalu, 08.55 WIB).
+  insert into public.pasien (terapis_id, nama_tampilan, sisi_dilatih, token_hash, is_demo, aktif, catatan,
+                             persetujuan_pada, persetujuan_versi)
+  values (v_terapis, 'Pak Budi', 'kanan', hash_budi, true, true, 'Pasca-stroke, kelemahan sisi kanan. Data contoh.',
+          ((v_hari_ini - 14) + time '08:55') at time zone 'Asia/Jakarta', 'v1')
   on conflict (token_hash) do update
-     set terapis_id    = excluded.terapis_id,
-         nama_tampilan = excluded.nama_tampilan,
-         sisi_dilatih  = excluded.sisi_dilatih,
-         is_demo       = true,
-         aktif         = true,
-         catatan       = excluded.catatan
+     set terapis_id        = excluded.terapis_id,
+         nama_tampilan     = excluded.nama_tampilan,
+         sisi_dilatih      = excluded.sisi_dilatih,
+         is_demo           = true,
+         aktif             = true,
+         catatan           = excluded.catatan,
+         persetujuan_pada  = excluded.persetujuan_pada,
+         persetujuan_versi = excluded.persetujuan_versi
   returning id into v_budi;
 
   -- Set ulang data turunan (sesi_gerakan & kejadian ikut terhapus lewat cascade dari sesi).
@@ -107,16 +113,19 @@ begin
     ),
     'template', null, 'seed-demo-budi');
 
-  -- ---------- Bu Siti: pasien kedua, belum pernah latihan ----------
-  insert into public.pasien (terapis_id, nama_tampilan, sisi_dilatih, token_hash, is_demo, aktif, catatan)
-  values (v_terapis, 'Bu Siti', 'kiri', hash_siti, true, true, null)
+  -- ---------- Bu Siti: pasien kedua, belum pernah latihan & belum menyetujui privasi ----------
+  insert into public.pasien (terapis_id, nama_tampilan, sisi_dilatih, token_hash, is_demo, aktif, catatan,
+                             persetujuan_pada, persetujuan_versi)
+  values (v_terapis, 'Bu Siti', 'kiri', hash_siti, true, true, null, null, null)
   on conflict (token_hash) do update
-     set terapis_id    = excluded.terapis_id,
-         nama_tampilan = excluded.nama_tampilan,
-         sisi_dilatih  = excluded.sisi_dilatih,
-         is_demo       = true,
-         aktif         = true,
-         catatan       = excluded.catatan
+     set terapis_id        = excluded.terapis_id,
+         nama_tampilan     = excluded.nama_tampilan,
+         sisi_dilatih      = excluded.sisi_dilatih,
+         is_demo           = true,
+         aktif             = true,
+         catatan           = excluded.catatan,
+         persetujuan_pada  = null,
+         persetujuan_versi = null
   returning id into v_siti;
 
   delete from public.sesi            where pasien_id = v_siti;

@@ -92,7 +92,7 @@ export async function dataDetailPasien(id: string) {
 
   const hasilPasien = await supabase
     .from("pasien")
-    .select("id, nama_tampilan, sisi_dilatih, aktif, is_demo, catatan, terakhir_aktif, dibuat")
+    .select("id, nama_tampilan, sisi_dilatih, aktif, is_demo, catatan, terakhir_aktif, dibuat, persetujuan_pada, persetujuan_versi")
     .eq("id", id)
     .maybeSingle();
   periksa("dataDetailPasien.pasien", hasilPasien);
