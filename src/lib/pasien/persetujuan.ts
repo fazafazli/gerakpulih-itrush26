@@ -25,3 +25,16 @@ export const perluCatatPersetujuan = (versiDb: string | null | undefined): boole
 export function tujuanSetelahSetuju(lanjut: string | null | undefined): "/sesi" | "/beranda" {
   return lanjut === "/sesi" ? "/sesi" : "/beranda";
 }
+
+/**
+ * Tampilan halaman /privasi (publik untuk dibaca):
+ * - "baca": pengunjung tanpa cookie pasien sah (mis. juri) → kebijakan saja, tanpa form & tanpa data pasien;
+ * - "form": pasien yang belum setuju di perangkat ini → tombol "Saya setuju";
+ * - "sudah": pasien yang sudah setuju → tombol lanjut.
+ */
+export type ModePrivasi = "baca" | "form" | "sudah";
+
+export function modePrivasi(args: { pasienSah: boolean; nilaiCookieSetuju: string | null | undefined }): ModePrivasi {
+  if (!args.pasienSah) return "baca";
+  return sudahSetuju(args.nilaiCookieSetuju) ? "sudah" : "form";
+}

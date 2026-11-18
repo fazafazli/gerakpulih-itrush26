@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FormSetuju } from "@/components/pasien/form-setuju";
-import { COOKIE_PERSETUJUAN, sudahSetuju, tujuanSetelahSetuju } from "@/lib/pasien/persetujuan";
-import { wajibPasien } from "@/lib/pasien/sesi";
+import { COOKIE_PERSETUJUAN, modePrivasi, tujuanSetelahSetuju } from "@/lib/pasien/persetujuan";
+import { getPasienSaatIni } from "@/lib/pasien/sesi";
 
 export const metadata: Metadata = { title: "Privasi & data · GerakPulih" };
 
@@ -28,7 +28,7 @@ export default function HalamanPrivasi({ searchParams }: { searchParams: Promise
       <div className="flex flex-col gap-2">
         <ShieldCheck aria-hidden className="size-12 text-primary" />
         <h1 className="font-heading text-[30px] leading-tight font-bold">Privasi latihan Anda</h1>
-        <p className="text-xl text-muted-foreground">Baca sebentar bersama pendamping.</p>
+        <p className="text-xl text-muted-foreground">Apa yang terjadi dengan data saat berlatih dengan GerakPulih.</p>
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -52,10 +52,22 @@ export default function HalamanPrivasi({ searchParams }: { searchParams: Promise
   );
 }
 
+/**
+ * Halaman ini publik untuk dibaca. getPasienSaatIni() memeriksa tanda tangan cookie lebih dulu:
+ * tanpa cookie pasien sah tidak ada query data pasien, tidak ada nama, dan tidak ada form.
+ */
 async function AksiPrivasi({ searchParams }: { searchParams: Promise<{ lanjut?: string }> }) {
-  await wajibPasien();
-  const [{ lanjut }, jar] = await Promise.all([searchParams, cookies()]);
-  if (sudahSetuju(jar.get(COOKIE_PERSETUJUAN)?.value)) {
+  const [pasien, { lanjut }, jar] = await Promise.all([getPasienSaatIni(), searchParams, cookies()]);
+  const mode = modePrivasi({ pasienSah: pasien != null, nilaiCookieSetuju: jar.get(COOKIE_PERSETUJUAN)?.value });
+
+  if (mode === "baca") {
+    return (
+      <p className="rounded-2xl bg-cyan-lembut p-4 text-lg leading-relaxed text-secondary-foreground">
+        Pasien akan diminta menyetujui ini saat membuka link latihan dari terapis.
+      </p>
+    );
+  }
+  if (mode === "sudah") {
     return (
       <div className="flex flex-col gap-3">
         <p role="status" className="flex items-center gap-2 rounded-2xl bg-sukses-bg p-4 text-lg font-semibold text-sukses-teks">

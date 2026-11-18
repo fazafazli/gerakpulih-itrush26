@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { perluCatatPersetujuan, sudahSetuju, tujuanSetelahSetuju, VERSI_PERSETUJUAN } from "@/lib/pasien/persetujuan";
+import { modePrivasi, perluCatatPersetujuan, sudahSetuju, tujuanSetelahSetuju, VERSI_PERSETUJUAN } from "@/lib/pasien/persetujuan";
 
 describe("persetujuan privasi", () => {
   it("cookie: hanya versi berlaku atau lebih baru yang dianggap setuju", () => {
@@ -23,5 +23,18 @@ describe("persetujuan privasi", () => {
     expect(tujuanSetelahSetuju("https://jahat.example")).toBe("/beranda");
     expect(tujuanSetelahSetuju("//jahat.example")).toBe("/beranda");
     expect(tujuanSetelahSetuju(null)).toBe("/beranda");
+  });
+});
+
+describe("modePrivasi (halaman /privasi publik)", () => {
+  it("tanpa cookie pasien sah → hanya baca, apa pun cookie persetujuannya", () => {
+    expect(modePrivasi({ pasienSah: false, nilaiCookieSetuju: undefined })).toBe("baca");
+    expect(modePrivasi({ pasienSah: false, nilaiCookieSetuju: "v1" })).toBe("baca");
+  });
+
+  it("pasien sah → form bila belum setuju (atau versi lama), 'sudah' bila setuju versi berlaku", () => {
+    expect(modePrivasi({ pasienSah: true, nilaiCookieSetuju: null })).toBe("form");
+    expect(modePrivasi({ pasienSah: true, nilaiCookieSetuju: "v0" })).toBe("form");
+    expect(modePrivasi({ pasienSah: true, nilaiCookieSetuju: "v1" })).toBe("sudah");
   });
 });

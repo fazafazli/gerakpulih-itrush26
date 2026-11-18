@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_PASIEN } from "@/lib/pasien/token";
 
 const RUTE_TERAPIS = ["/dashboard", "/pasien"];
-const RUTE_PASIEN = ["/beranda", "/privasi", "/sesi", "/selesai"];
+// /privasi sengaja publik untuk dibaca (form persetujuan hanya muncul untuk pasien dengan cookie sah).
+const RUTE_PASIEN = ["/beranda", "/sesi", "/selesai"];
 const cocok = (path: string, daftar: string[]) => daftar.some((p) => path === p || path.startsWith(`${p}/`));
 
 export async function proxy(request: NextRequest) {
