@@ -30,3 +30,11 @@ function originValid(nilai: string | null | undefined): string | null {
     return null;
   }
 }
+
+/**
+ * Alamat publik untuk konten statis (landing, QR demo, metadata). Dihitung saat build, tanpa request:
+ * APP_URL, lalu domain produksi Vercel (env sistem VERCEL_PROJECT_PRODUCTION_URL, tanpa skema), atau null.
+ */
+export function originPublik(env: Record<string, string | undefined> = process.env): string | null {
+  return originValid(env.APP_URL) ?? originValid(env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : null);
+}

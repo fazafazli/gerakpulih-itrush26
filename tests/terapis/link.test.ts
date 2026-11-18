@@ -20,3 +20,13 @@ describe("pilihOrigin (APP_URL untuk link pasien)", () => {
     expect(pilihOrigin({})).toBe("http://localhost:3000");
   });
 });
+
+describe("originPublik (landing & QR demo, tanpa request)", () => {
+  it("APP_URL → domain produksi Vercel → null", async () => {
+    const { originPublik } = await import("@/lib/situs");
+    expect(originPublik({ APP_URL: "https://gp.vercel.app/", VERCEL_PROJECT_PRODUCTION_URL: "lain.vercel.app" })).toBe("https://gp.vercel.app");
+    expect(originPublik({ APP_URL: "", VERCEL_PROJECT_PRODUCTION_URL: "gp-prod.vercel.app" })).toBe("https://gp-prod.vercel.app");
+    expect(originPublik({ APP_URL: "bukan url" })).toBeNull();
+    expect(originPublik({})).toBeNull();
+  });
+});
