@@ -39,9 +39,17 @@ export const ProgramSchema = z.object({
     .min(1)
     .max(KODE_GERAKAN.length)
     .refine((g) => unik(g.map((x) => x.kode_gerakan)), "Gerakan ganda.")
+    .refine((g) => unik(g.map((x) => x.urutan)), "Nomor urutan tiap gerakan harus berbeda.")
     .refine((g) => g.some((x) => x.aktif), "Aktifkan minimal satu gerakan agar pasien bisa berlatih."),
 });
 export type Program = z.infer<typeof ProgramSchema>;
+
+export const IdSchema = z.uuid();
+
+export const StatusLinkSchema = z.object({
+  pasien_id: IdSchema,
+  aktif: z.enum(["true", "false"]).transform((v) => v === "true"),
+});
 
 const angka = (v: FormDataEntryValue | null) => {
   const s = String(v ?? "").trim();

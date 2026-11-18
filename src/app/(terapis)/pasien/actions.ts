@@ -1,18 +1,20 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { z } from "zod";
 import { wajibTerapis } from "@/lib/auth/terapis";
 import { GERAKAN } from "@/lib/pose/exercises";
 import { createClient } from "@/lib/supabase/server";
+import { catatGalat } from "@/lib/terapis/galat";
 import { type LinkBaru, linkUntuk, tokenBaru } from "@/lib/terapis/link";
 import {
   dariFormPasienBaru,
   dariFormProgram,
+  IdSchema,
   PasienBaruSchema,
   pesanGalatDb,
   pesanPertama,
   ProgramSchema,
+  StatusLinkSchema,
 } from "@/lib/terapis/schema";
 
 /**
@@ -26,8 +28,13 @@ export type StatusLink =
   | { status: "galat"; pesan: string }
   | ({ status: "ok"; pasienId: string; nama: string } & LinkBaru);
 
-const IdSchema = z.uuid();
 const galat = (pesan: string) => ({ status: "galat" as const, pesan });
+
+/** Galat database: dicatat di log server, pengguna hanya melihat pesan ramah. */
+function galatDb(konteks: string, e: { code?: string; message?: string } | null) {
+  catatGalat(konteks, e);
+  return galat(pesanGalatDb(e));
+}
 
 export async function tambahPasien(_s: StatusLink, fd: FormData): Promise<StatusLink> {
   const terapis = await wajibTerapis();
@@ -47,7 +54,7 @@ export async function tambahPasien(_s: StatusLink, fd: FormData): Promise<Status
     })
     .select("id")
     .single();
-  if (error || !pasien) return galat(pesanGalatDb(error));
+  if (error || !pasien) return galatDb("tambahPasien", error);
 
   // Program awal memakai target & repetisi bawaan; terapis bisa mengubahnya setelah ini.
   const { error: galatProgram } = await supabase.from("program_gerakan").insert(
@@ -61,8 +68,9 @@ export async function tambahPasien(_s: StatusLink, fd: FormData): Promise<Status
   );
   if (galatProgram) {
     // Tanpa transaksi di PostgREST: hapus pasien agar tidak ada pasien tanpa program.
-    await supabase.from("pasien").delete().eq("id", pasien.id);
-    return galat(pesanGalatDb(galatProgram));
+    const { error: galatHapus } = await supabase.from("pasien").delete().eq("id", pasien.id);
+    catatGalat("tambahPasien.rollback", galatHapus);
+    return galatDb("tambahPasien.program", galatProgram);
   }
 
   return { status: "ok", pasienId: pasien.id, nama: data.data.nama_tampilan, ...(await linkUntuk(token)) };
@@ -81,7 +89,7 @@ export async function buatLinkBaru(_s: StatusLink, fd: FormData): Promise<Status
     .eq("id", id.data)
     .select("id, nama_tampilan")
     .maybeSingle();
-  if (error) return galat(pesanGalatDb(error));
+  if (error) return galatDb("buatLinkBaru", error);
   if (!data) return galat("Pasien tidak ditemukan.");
 
   return { status: "ok", pasienId: data.id, nama: data.nama_tampilan, ...(await linkUntuk(token)) };
@@ -89,13 +97,13 @@ export async function buatLinkBaru(_s: StatusLink, fd: FormData): Promise<Status
 
 export async function ubahStatusLink(_s: StatusAksi, fd: FormData): Promise<StatusAksi> {
   await wajibTerapis();
-  const id = IdSchema.safeParse(fd.get("pasien_id"));
-  if (!id.success) return galat("Pasien tidak ditemukan.");
-  const aktif = fd.get("aktif") === "true";
+  const input = StatusLinkSchema.safeParse({ pasien_id: fd.get("pasien_id"), aktif: fd.get("aktif") });
+  if (!input.success) return galat("Permintaan tidak valid. Muat ulang halaman lalu coba lagi.");
+  const { pasien_id, aktif } = input.data;
 
   const supabase = await createClient();
-  const { data, error } = await supabase.from("pasien").update({ aktif }).eq("id", id.data).select("id").maybeSingle();
-  if (error) return galat(pesanGalatDb(error));
+  const { data, error } = await supabase.from("pasien").update({ aktif }).eq("id", pasien_id).select("id").maybeSingle();
+  if (error) return galatDb("ubahStatusLink", error);
   if (!data) return galat("Pasien tidak ditemukan.");
 
   refresh();
@@ -109,7 +117,8 @@ export async function simpanProgram(_s: StatusAksi, fd: FormData): Promise<Statu
 
   const supabase = await createClient();
   const { pasien_id, gerakan } = data.data;
-  const { data: pasien } = await supabase.from("pasien").select("id").eq("id", pasien_id).maybeSingle();
+  const { data: pasien, error: galatPasien } = await supabase.from("pasien").select("id").eq("id", pasien_id).maybeSingle();
+  if (galatPasien) return galatDb("simpanProgram.pasien", galatPasien);
   if (!pasien) return galat("Pasien tidak ditemukan.");
 
   const { error } = await supabase
@@ -118,7 +127,7 @@ export async function simpanProgram(_s: StatusAksi, fd: FormData): Promise<Statu
       gerakan.map((g) => ({ pasien_id, ...g })),
       { onConflict: "pasien_id,kode_gerakan" },
     );
-  if (error) return galat(pesanGalatDb(error));
+  if (error) return galatDb("simpanProgram", error);
 
   refresh();
   return { status: "ok", pesan: "Program tersimpan. Pasien melihatnya saat membuka latihan berikutnya." };
@@ -136,7 +145,7 @@ export async function tandaiDitindaklanjuti(_s: StatusAksi, fd: FormData): Promi
     .eq("id", id.data)
     .select("id")
     .maybeSingle();
-  if (error) return galat(pesanGalatDb(error));
+  if (error) return galatDb("tandaiDitindaklanjuti", error);
   if (!data) return galat("Laporan tidak ditemukan.");
 
   refresh();

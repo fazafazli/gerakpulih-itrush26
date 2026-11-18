@@ -20,7 +20,7 @@ export function KalenderKepatuhan({ kepatuhan }: { kepatuhan: Kepatuhan }) {
                     "flex aspect-square max-h-9 items-center justify-center rounded-md text-[10px] font-bold",
                     h.jumlahSesi === 0 && "bg-mint-pucat ring-1 ring-border ring-inset",
                     h.jumlahSesi > 0 && !h.nyeri && "bg-primary text-primary-foreground",
-                    h.nyeri && "bg-bahaya text-white",
+                    h.nyeri && "bg-bahaya text-primary-foreground",
                   )}
                 >
                   <span className="sr-only">

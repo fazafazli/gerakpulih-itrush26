@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   dariFormPasienBaru,
   dariFormProgram,
+  IdSchema,
   PasienBaruSchema,
   pesanGalatDb,
   ProgramSchema,
+  StatusLinkSchema,
 } from "@/lib/terapis/schema";
 
 const PASIEN = "11111111-2222-4333-8444-555555555555";
@@ -72,6 +74,12 @@ describe("ProgramSchema", () => {
     expect(ProgramSchema.safeParse(dariFormProgram(isi({ "angkat_samping.target_sudut": "90.5" }))).success).toBe(false);
   });
 
+  it("nomor urutan tiap gerakan harus berbeda", () => {
+    const r = ProgramSchema.safeParse(dariFormProgram(isi({ "tekuk_siku.urutan": "1" })));
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0].message).toMatch(/urutan/);
+  });
+
   it("minimal satu gerakan aktif & pasien_id harus uuid", () => {
     const r = ProgramSchema.safeParse(dariFormProgram(isi({ "angkat_samping.aktif": "" })));
     expect(r.success).toBe(false);
@@ -85,5 +93,21 @@ describe("pesanGalatDb", () => {
     expect(pesanGalatDb({ code: "P0001", message: "pasien_demo_terlindungi" })).toMatch(/Pasien contoh/);
     expect(pesanGalatDb({ code: "42501", message: "permission denied for table pasien" })).not.toMatch(/permission/);
     expect(pesanGalatDb(null)).toMatch(/Gagal menyimpan/);
+  });
+});
+
+describe("StatusLinkSchema & IdSchema", () => {
+  it("aktif hanya 'true'/'false', diubah jadi boolean", () => {
+    expect(StatusLinkSchema.parse({ pasien_id: PASIEN, aktif: "false" })).toEqual({ pasien_id: PASIEN, aktif: false });
+    expect(StatusLinkSchema.parse({ pasien_id: PASIEN, aktif: "true" }).aktif).toBe(true);
+    expect(StatusLinkSchema.safeParse({ pasien_id: PASIEN, aktif: "ya" }).success).toBe(false);
+    expect(StatusLinkSchema.safeParse({ pasien_id: PASIEN, aktif: null }).success).toBe(false);
+    expect(StatusLinkSchema.safeParse({ pasien_id: "1 or 1=1", aktif: "true" }).success).toBe(false);
+  });
+
+  it("IdSchema menolak id bukan uuid (dipakai juga untuk parameter URL)", () => {
+    expect(IdSchema.safeParse(PASIEN).success).toBe(true);
+    expect(IdSchema.safeParse("bukan-uuid").success).toBe(false);
+    expect(IdSchema.safeParse(null).success).toBe(false);
   });
 });

@@ -46,7 +46,8 @@ async function IsiProgram({ params }: { params: Promise<{ id: string }> }) {
         <FormProgram pasienId={pasien.id} baris={baris} />
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
-          Target sudut dipakai untuk menghitung &ldquo;repetisi mencapai target&rdquo;. Naikkan bertahap sesuai penilaian klinis Anda.
+          Target sudut dipakai untuk menghitung &ldquo;repetisi mencapai target&rdquo;. Target dan repetisi sepenuhnya keputusan Anda; pasien
+          tidak bisa mengubahnya.
         </p>
       </main>
     </>

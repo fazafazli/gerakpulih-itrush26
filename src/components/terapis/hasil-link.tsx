@@ -33,7 +33,7 @@ export function HasilLink({ nama, url, qr }: { nama: string; url: string; qr: st
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         {/* eslint-disable-next-line @next/next/no-img-element -- data URL SVG dari server, tidak perlu optimasi gambar */}
-        <img src={qr} alt={`Kode QR link latihan ${nama}`} width={176} height={176} className="size-44 shrink-0 rounded-lg border border-border bg-white p-2" />
+        <img src={qr} alt={`Kode QR link latihan ${nama}`} width={176} height={176} className="size-44 shrink-0 rounded-lg border border-border bg-card p-2" />
         <div className="flex w-full min-w-0 flex-col gap-3">
           <label htmlFor="url-pasien" className="text-sm font-medium">
             Link latihan {nama}

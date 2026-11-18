@@ -1,12 +1,24 @@
 "use client";
 
-import { CircleAlert, FileText, RefreshCw, Sparkles } from "lucide-react";
+import { CircleAlert, FileText, History, RefreshCw, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RingkasanSchema, type Ringkasan } from "@/lib/ai/schema";
+import { labelTanggal } from "@/lib/terapis/olah";
 
-type Isi = { isi: Ringkasan; sumber: "ai" | "template"; dibuat: string };
+type Isi = {
+  isi: Ringkasan;
+  sumber: "ai" | "template";
+  dibuat: string;
+  /** Periode tersimpan ("YYYY-MM-DD"); hasil baru dari API selalu 14 hari terakhir. */
+  periode?: { mulai: string; selesai: string };
+};
+
+const PESAN_USANG = {
+  nyeri: "Ada laporan nyeri baru sejak ringkasan ini dibuat. Tekan Perbarui.",
+  sesi: "Ada sesi latihan baru sejak ringkasan ini dibuat. Tekan Perbarui.",
+} as const;
 
 const TANGGAL = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
 
@@ -29,8 +41,18 @@ async function mintaRingkasan(pasienId: string): Promise<Isi> {
 }
 
 /** Ringkasan AI untuk terapis: selalu berlabel sumber & "bukan diagnosis". */
-export function KartuRingkasan({ pasienId, awal }: { pasienId: string; awal: Isi | null }) {
+export function KartuRingkasan({
+  pasienId,
+  awal,
+  usang,
+}: {
+  pasienId: string;
+  awal: Isi | null;
+  /** Alasan ringkasan awal tertinggal data terbaru (dihitung server). */
+  usang: keyof typeof PESAN_USANG | null;
+}) {
   const [ringkasan, setRingkasan] = useState<Isi | null>(awal);
+  const [diperbarui, setDiperbarui] = useState(false);
   const [memuat, setMemuat] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
 
@@ -39,6 +61,7 @@ export function KartuRingkasan({ pasienId, awal }: { pasienId: string; awal: Isi
     setGalat(null);
     try {
       setRingkasan(await mintaRingkasan(pasienId));
+      setDiperbarui(true);
     } catch (e) {
       setGalat(e instanceof Error ? e.message : "Ringkasan belum bisa dibuat.");
     } finally {
@@ -52,7 +75,7 @@ export function KartuRingkasan({ pasienId, awal }: { pasienId: string; awal: Isi
         <div>
           <h2 id="judul-ringkasan" className="flex items-center gap-2 font-heading text-lg font-semibold">
             <Sparkles aria-hidden className="size-4 text-primary" />
-            Ringkasan 14 hari
+            Ringkasan latihan
           </h2>
           {ringkasan && (
             <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
@@ -65,7 +88,13 @@ export function KartuRingkasan({ pasienId, awal }: { pasienId: string; awal: Isi
                   <FileText aria-hidden className="size-3" /> Template otomatis
                 </span>
               )}
-              <span>{TANGGAL.format(new Date(ringkasan.dibuat))}</span>
+              <span>
+                {ringkasan.periode
+                  ? `Periode ${labelTanggal(ringkasan.periode.mulai)} – ${labelTanggal(ringkasan.periode.selesai)}`
+                  : "14 hari terakhir"}
+                {" · dibuat "}
+                {TANGGAL.format(new Date(ringkasan.dibuat))}
+              </span>
             </p>
           )}
         </div>
@@ -74,6 +103,13 @@ export function KartuRingkasan({ pasienId, awal }: { pasienId: string; awal: Isi
           {ringkasan ? "Perbarui" : "Buat"}
         </Button>
       </div>
+
+      {usang && !diperbarui && !memuat && (
+        <p className="mt-4 flex items-start gap-2 rounded-lg bg-card px-3 py-2 text-sm text-secondary-foreground ring-1 ring-primary/20">
+          <History aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+          {PESAN_USANG[usang]}
+        </p>
+      )}
 
       <div aria-live="polite" aria-busy={memuat} className="mt-4">
         {memuat ? (

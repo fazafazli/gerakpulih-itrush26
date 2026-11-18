@@ -14,7 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getTerapisSaatIni } from "@/lib/auth/terapis";
 import { GERAKAN, isKodeGerakan } from "@/lib/pose/exercises";
 import { dataDetailPasien } from "@/lib/terapis/data";
-import { gerakanTercatat, kepatuhanHarian, labelRelatif, seriProgres, statusPasien } from "@/lib/terapis/olah";
+import { gerakanTercatat, kepatuhanHarian, labelRelatif, ringkasanUsang, seriProgres, statusPasien } from "@/lib/terapis/olah";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Detail pasien · GerakPulih" };
@@ -34,7 +34,9 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
   const sekarang = new Date();
 
   const nyeriTerbuka = kejadian.filter((k) => !k.ditindaklanjuti);
-  const status = statusPasien({ aktif: pasien.aktif, nyeriTerbuka: nyeriTerbuka.length, terakhirSesi: sesi.at(-1)?.mulai ?? null, sekarang });
+  const sesiTerakhir = sesi.at(-1)?.mulai ?? null;
+  const status = statusPasien({ aktif: pasien.aktif, nyeriTerbuka: nyeriTerbuka.length, terakhirSesi: sesiTerakhir, sekarang });
+  const usang = ringkasan ? ringkasanUsang({ dibuat: ringkasan.dibuat, nyeriTerbuka, sesiTerakhir }) : null;
   const seri: SeriGerakan[] = gerakanTercatat(sesi).map((kode) => ({ kode, nama: GERAKAN[kode].nama, titik: seriProgres(sesi, kode) }));
   const kepatuhan = kepatuhanHarian(sesi, sekarang);
   const programAktif = program.filter((p) => p.aktif && isKodeGerakan(p.kode_gerakan));
@@ -55,7 +57,7 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
             </div>
             <p className="text-sm text-muted-foreground">
               Lengan {pasien.sisi_dilatih} · {sesi.length} sesi dalam 90 hari
-              {sesi.length > 0 && ` · terakhir ${labelRelatif(sesi.at(-1)!.mulai, sekarang)}`}
+              {sesiTerakhir && ` · terakhir ${labelRelatif(sesiTerakhir, sekarang)}`}
               {pasien.is_demo && " · data contoh"}
             </p>
             {pasien.catatan && <p className="max-w-prose text-sm">{pasien.catatan}</p>}
@@ -72,8 +74,7 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
           >
             <CircleAlert aria-hidden className="size-5 shrink-0" />
             <span>
-              <b className="font-semibold">{nyeriTerbuka.length} laporan nyeri belum ditindaklanjuti.</b> Pertimbangkan meninjau pasien sebelum
-              mengubah target.
+              <b className="font-semibold">{nyeriTerbuka.length} laporan nyeri belum ditindaklanjuti.</b> Lihat detail laporan di bawah.
             </span>
           </a>
         )}
@@ -108,7 +109,18 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <aside className="flex flex-col gap-6">
-            <KartuRingkasan pasienId={pasien.id} awal={ringkasan} />
+            <KartuRingkasan
+              pasienId={pasien.id}
+              usang={usang}
+              awal={
+                ringkasan && {
+                  isi: ringkasan.isi,
+                  sumber: ringkasan.sumber,
+                  dibuat: ringkasan.dibuat,
+                  periode: { mulai: ringkasan.periode_mulai, selesai: ringkasan.periode_selesai },
+                }
+              }
+            />
 
             <section aria-labelledby="judul-program" className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-baseline justify-between">

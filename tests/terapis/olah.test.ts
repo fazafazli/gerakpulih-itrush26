@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   aktivitasTerbaru,
+  gabungNyeri,
+  LABEL_STATUS,
   angkaDashboard,
   barisDaftarPasien,
   type BarisSesiTerapis,
@@ -8,6 +10,7 @@ import {
   jamWib,
   kepatuhanHarian,
   labelRelatif,
+  ringkasanUsang,
   ringkasSeri,
   selisihHari,
   seriProgres,
@@ -188,5 +191,41 @@ describe("tautan", () => {
     const wa = tautanWhatsApp("Pak Budi", "https://gp.app/mulai/x");
     expect(wa.startsWith("https://wa.me/?text=")).toBe(true);
     expect(decodeURIComponent(wa.split("text=")[1])).toContain("https://gp.app/mulai/x");
+  });
+});
+
+describe("gabungNyeri", () => {
+  const k = (id: string, terjadi_pada: string, ditindaklanjuti: boolean) => ({ id, terjadi_pada, ditindaklanjuti });
+
+  it("semua yang terbuka di atas (tanpa batas), lalu riwayat; terbaru dulu, tanpa duplikat", () => {
+    const terbuka = Array.from({ length: 25 }, (_, i) => k(`b${i}`, `2026-10-${String(i + 1).padStart(2, "0")}T01:00:00.000Z`, false));
+    const riwayat = [k("r1", "2026-11-10T01:00:00.000Z", true), k("r2", "2026-11-12T01:00:00.000Z", true)];
+    const h = gabungNyeri(terbuka, riwayat);
+    expect(h).toHaveLength(27);
+    expect(h.slice(0, 25).every((x) => !x.ditindaklanjuti)).toBe(true);
+    expect(h[0].id).toBe("b24");
+    expect(h.slice(25).map((x) => x.id)).toEqual(["r2", "r1"]);
+  });
+
+  it("mengabaikan baris yang salah kelompok", () => {
+    const h = gabungNyeri([k("a", "2026-11-01T00:00:00.000Z", true)], [k("b", "2026-11-02T00:00:00.000Z", false)]);
+    expect(h).toEqual([]);
+  });
+});
+
+describe("ringkasanUsang", () => {
+  const dibuat = "2026-11-15T10:00:00.000Z";
+  it("nyeri baru diutamakan, lalu sesi baru, selain itu null", () => {
+    const nyeriBaru = [{ terjadi_pada: "2026-11-16T01:00:00.000Z" }];
+    expect(ringkasanUsang({ dibuat, nyeriTerbuka: nyeriBaru, sesiTerakhir: "2026-11-17T01:00:00.000Z" })).toBe("nyeri");
+    expect(ringkasanUsang({ dibuat, nyeriTerbuka: [{ terjadi_pada: "2026-11-01T01:00:00.000Z" }], sesiTerakhir: "2026-11-17T01:00:00.000Z" })).toBe("sesi");
+    expect(ringkasanUsang({ dibuat, nyeriTerbuka: [], sesiTerakhir: "2026-11-14T01:00:00.000Z" })).toBeNull();
+    expect(ringkasanUsang({ dibuat, nyeriTerbuka: [], sesiTerakhir: null })).toBeNull();
+  });
+});
+
+describe("label status", () => {
+  it("tanpa sesi dalam jendela data tidak diklaim 'belum mulai'", () => {
+    expect(LABEL_STATUS.belum_mulai).toBe("Belum ada sesi");
   });
 });

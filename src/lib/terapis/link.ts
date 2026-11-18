@@ -4,6 +4,12 @@ import QRCode from "qrcode";
 import { buatTokenPasien, hashToken } from "@/lib/pasien/token";
 import { tautanPasien } from "./olah";
 
+/**
+ * QR dikirim sebagai gambar data-URL, yang tidak bisa membaca CSS variable.
+ * Nilainya sama dengan token --foreground dan --card di globals.css (kontras tinggi agar mudah dipindai).
+ */
+const WARNA_QR = { dark: "#173b3a", light: "#ffffff" } as const;
+
 export type LinkBaru = { url: string; qr: string };
 
 /** Token acak baru: yang asli hanya dikembalikan ke terapis sekali, database menyimpan hash-nya. */
@@ -29,7 +35,7 @@ export async function linkUntuk(token: string): Promise<LinkBaru> {
     type: "svg",
     margin: 1,
     errorCorrectionLevel: "M",
-    color: { dark: "#173b3a", light: "#ffffff" },
+    color: WARNA_QR,
   });
   return { url, qr: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}` };
 }

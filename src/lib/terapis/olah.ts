@@ -159,7 +159,8 @@ export const URUTAN_STATUS: Record<StatusPasien, number> = { nyeri: 0, tidak_lat
 export const LABEL_STATUS: Record<StatusPasien, string> = {
   nyeri: "Laporan nyeri",
   nonaktif: "Link nonaktif",
-  belum_mulai: "Belum mulai",
+  // Bukan "belum mulai": pasien yang sesi terakhirnya di luar jendela data juga masuk ke sini.
+  belum_mulai: "Belum ada sesi",
   tidak_latihan: "Jeda latihan",
   baik: "Rutin",
 };
@@ -261,6 +262,36 @@ export function angkaDashboard(baris: readonly BarisDaftar[], sesi: readonly Bar
     persenKepatuhan: aktif.length ? Math.round((hariUnik.size / (aktif.length * 7)) * 100) : null,
     perluTindakLanjut: baris.filter((b) => b.status === "nyeri" || b.status === "tidak_latihan").length,
   };
+}
+
+// ---------- Laporan nyeri ----------
+
+type BarisNyeri = { id: string; terjadi_pada: string; ditindaklanjuti: boolean };
+
+/**
+ * Gabungan laporan nyeri untuk halaman detail: SEMUA yang belum ditindaklanjuti (tidak pernah dipotong)
+ * di atas, lalu riwayat yang sudah ditindaklanjuti. Masing-masing terbaru dulu, tanpa duplikat.
+ */
+export function gabungNyeri<T extends BarisNyeri>(terbuka: readonly T[], riwayat: readonly T[]): T[] {
+  const terbaru = (a: T, b: T) => b.terjadi_pada.localeCompare(a.terjadi_pada);
+  const buka = terbuka.filter((k) => !k.ditindaklanjuti).sort(terbaru);
+  const idBuka = new Set(buka.map((k) => k.id));
+  const lain = riwayat.filter((k) => k.ditindaklanjuti && !idBuka.has(k.id)).sort(terbaru);
+  return [...buka, ...lain];
+}
+
+// ---------- Ringkasan AI ----------
+
+/** Alasan ringkasan tersimpan sudah tertinggal data terbaru (laporan nyeri diutamakan), atau null. */
+export function ringkasanUsang(args: {
+  dibuat: string;
+  nyeriTerbuka: readonly { terjadi_pada: string }[];
+  sesiTerakhir: string | null;
+}): "nyeri" | "sesi" | null {
+  const dibuat = Date.parse(args.dibuat);
+  if (args.nyeriTerbuka.some((k) => Date.parse(k.terjadi_pada) > dibuat)) return "nyeri";
+  if (args.sesiTerakhir && Date.parse(args.sesiTerakhir) > dibuat) return "sesi";
+  return null;
 }
 
 // ---------- Aktivitas terbaru ----------

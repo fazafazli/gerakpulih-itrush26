@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { RingkasanSchema, type Ringkasan } from "@/lib/ai/schema";
 import { wajibTerapis } from "@/lib/auth/terapis";
 import { createClient } from "@/lib/supabase/server";
-import type { BarisSesiTerapis } from "./olah";
+import { catatGalat } from "./galat";
+import { type BarisSesiTerapis, gabungNyeri } from "./olah";
+import { IdSchema } from "./schema";
 
 /**
  * Pembacaan data dashboard terapis. Selalu lewat klien server atas nama terapis (RLS),
@@ -18,10 +20,26 @@ const KOLOM_SESI =
 
 const sejak = () => new Date(Date.now() - JENDELA_HARI * 86_400_000).toISOString();
 
+/** Riwayat laporan nyeri yang SUDAH ditindaklanjuti di halaman detail. Yang belum, selalu ditampilkan semua. */
+const RIWAYAT_NYERI = 10;
+
 class GalatData extends Error {
   constructor() {
     super("Data belum bisa dimuat. Periksa koneksi lalu muat ulang halaman.");
   }
+}
+
+/** Catat galat pertama di log server lalu lempar pesan ramah (ditangkap error.tsx). */
+function periksa(konteks: string, ...hasil: { error: { code?: string; message?: string } | null }[]): void {
+  const galat = hasil.find((h) => h.error)?.error;
+  if (!galat) return;
+  catatGalat(konteks, galat);
+  throw new GalatData();
+}
+
+/** id di URL bukan uuid → pasti tidak ada; hindari galat 22P02 dari Postgres. */
+function wajibUuid(id: string): void {
+  if (!IdSchema.safeParse(id).success) notFound();
 }
 
 export type KejadianNyeri = {
@@ -50,12 +68,12 @@ export async function dataDashboard() {
       .eq("ditindaklanjuti", false)
       .order("terjadi_pada", { ascending: false }),
   ]);
-  if (pasien.error || sesi.error || nyeri.error) throw new GalatData();
+  periksa("dataDashboard", pasien, sesi, nyeri);
   return {
     terapis,
-    pasien: pasien.data,
-    sesi: sesi.data satisfies BarisSesiTerapis[],
-    nyeriTerbuka: nyeri.data satisfies KejadianNyeri[],
+    pasien: pasien.data ?? [],
+    sesi: (sesi.data ?? []) satisfies BarisSesiTerapis[],
+    nyeriTerbuka: (nyeri.data ?? []) satisfies KejadianNyeri[],
   };
 }
 
@@ -69,28 +87,37 @@ export type RingkasanTersimpan = {
 
 export async function dataDetailPasien(id: string) {
   await wajibTerapis();
-  // id bukan uuid → pasti tidak ada; hindari galat 22P02 dari Postgres.
-  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  wajibUuid(id);
   const supabase = await createClient();
 
-  const { data: pasien, error } = await supabase
+  const hasilPasien = await supabase
     .from("pasien")
     .select("id, nama_tampilan, sisi_dilatih, aktif, is_demo, catatan, terakhir_aktif, dibuat")
     .eq("id", id)
     .maybeSingle();
-  if (error) throw new GalatData();
+  periksa("dataDetailPasien.pasien", hasilPasien);
+  const pasien = hasilPasien.data;
   if (!pasien) notFound(); // bukan milik terapis ini (RLS) atau memang tidak ada
 
-  const [program, sesi, kejadian, ringkasan] = await Promise.all([
+  const [program, sesi, nyeriTerbuka, nyeriRiwayat, ringkasan] = await Promise.all([
     supabase.from("program_gerakan").select("kode_gerakan, target_sudut, repetisi, urutan, aktif").eq("pasien_id", id).order("urutan"),
     supabase.from("sesi").select(KOLOM_SESI).eq("pasien_id", id).gte("mulai", sejak()).order("mulai"),
+    // Laporan nyeri yang belum ditindaklanjuti tidak boleh terpotong batas jumlah.
     supabase
       .from("kejadian")
       .select(KOLOM_KEJADIAN)
       .eq("pasien_id", id)
       .eq("jenis", "stop_nyeri")
+      .eq("ditindaklanjuti", false)
+      .order("terjadi_pada", { ascending: false }),
+    supabase
+      .from("kejadian")
+      .select(KOLOM_KEJADIAN)
+      .eq("pasien_id", id)
+      .eq("jenis", "stop_nyeri")
+      .eq("ditindaklanjuti", true)
       .order("terjadi_pada", { ascending: false })
-      .limit(20),
+      .limit(RIWAYAT_NYERI),
     supabase
       .from("ringkasan_ai")
       .select("isi, sumber, dibuat, periode_mulai, periode_selesai")
@@ -99,7 +126,7 @@ export async function dataDetailPasien(id: string) {
       .limit(1)
       .maybeSingle(),
   ]);
-  if (program.error || sesi.error || kejadian.error || ringkasan.error) throw new GalatData();
+  periksa("dataDetailPasien", program, sesi, nyeriTerbuka, nyeriRiwayat, ringkasan);
 
   const isi = ringkasan.data ? RingkasanSchema.safeParse(ringkasan.data.isi) : null;
   const ringkasanTerakhir: RingkasanTersimpan | null =
@@ -115,9 +142,9 @@ export async function dataDetailPasien(id: string) {
 
   return {
     pasien,
-    program: program.data,
-    sesi: sesi.data satisfies BarisSesiTerapis[],
-    kejadian: kejadian.data satisfies KejadianNyeri[],
+    program: program.data ?? [],
+    sesi: (sesi.data ?? []) satisfies BarisSesiTerapis[],
+    kejadian: gabungNyeri<KejadianNyeri>(nyeriTerbuka.data ?? [], nyeriRiwayat.data ?? []),
     ringkasan: ringkasanTerakhir,
   };
 }
@@ -125,13 +152,13 @@ export async function dataDetailPasien(id: string) {
 /** Untuk editor program. */
 export async function dataProgramPasien(id: string) {
   await wajibTerapis();
-  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  wajibUuid(id);
   const supabase = await createClient();
   const [pasien, program] = await Promise.all([
     supabase.from("pasien").select("id, nama_tampilan, sisi_dilatih, is_demo").eq("id", id).maybeSingle(),
     supabase.from("program_gerakan").select("kode_gerakan, target_sudut, repetisi, urutan, aktif").eq("pasien_id", id).order("urutan"),
   ]);
-  if (pasien.error || program.error) throw new GalatData();
+  periksa("dataProgramPasien", pasien, program);
   if (!pasien.data) notFound();
-  return { pasien: pasien.data, program: program.data };
+  return { pasien: pasien.data, program: program.data ?? [] };
 }
