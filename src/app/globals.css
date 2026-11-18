@@ -161,3 +161,90 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Landing page ---------- */
+
+@theme {
+  /* Jarak vertikal antar-section landing (py-section). */
+  --spacing-section: clamp(4rem, 3rem + 4vw, 7rem);
+}
+
+/* Smooth scroll hanya bila pengguna tidak meminta gerak berkurang. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/*
+ * Animasi masuk section. Hanya aktif bila JS menandai <html data-animasi> (dan tidak reduced-motion),
+ * jadi tanpa JS semua konten langsung terlihat. Hero tidak memakai ini agar LCP tidak tertunda.
+ */
+html[data-animasi] .gp-muncul:not([data-tampil]) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+html[data-animasi] .gp-muncul {
+  transition:
+    opacity 600ms ease-out,
+    transform 600ms ease-out;
+}
+
+/*
+ * Ilustrasi HP di hero: sudut & hitungan bergerak pelan dalam loop (CSS saja).
+ * Nilai awal (@property initial-value) = keadaan puncak "target tercapai", yang dipakai bila animasi mati.
+ */
+@property --gp-sudut {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 92;
+}
+@property --gp-rep {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 7;
+}
+
+.gp-ilustrasi {
+  animation: gp-gerak 6s ease-in-out infinite;
+}
+.gp-ilustrasi .gp-angka-sudut::after {
+  counter-reset: sudut var(--gp-sudut);
+  content: counter(sudut) "°";
+}
+.gp-ilustrasi .gp-angka-rep::after {
+  counter-reset: rep var(--gp-rep);
+  content: counter(rep);
+}
+.gp-ilustrasi .gp-lengan {
+  transform-box: view-box;
+  transform-origin: 77px 66px;
+  animation: gp-lengan 6s ease-in-out infinite;
+}
+.gp-ilustrasi .gp-tanda-capai {
+  animation: gp-tanda 6s ease-in-out infinite;
+}
+
+@keyframes gp-gerak {
+  0% { --gp-sudut: 64; --gp-rep: 6; }
+  44% { --gp-rep: 6; }
+  45% { --gp-sudut: 92; --gp-rep: 7; }
+  62% { --gp-sudut: 92; }
+  97% { --gp-rep: 7; }
+  100% { --gp-sudut: 64; --gp-rep: 6; }
+}
+@keyframes gp-lengan {
+  0%, 100% { transform: rotate(28deg); }
+  45%, 62% { transform: rotate(0deg); }
+}
+@keyframes gp-tanda {
+  0%, 40%, 70%, 100% { opacity: 0; }
+  46%, 62% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-ilustrasi,
+  .gp-ilustrasi * {
+    animation: none !important;
+  }
+}
