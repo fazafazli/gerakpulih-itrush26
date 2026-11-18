@@ -1,11 +1,12 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { masuk, type StatusMasuk } from "./actions";
-
-const kelasInput =
-  "h-12 w-full rounded-xl border border-[#C9D3DE] bg-white px-4 text-base outline-none focus:border-[#0B5CAD] focus:ring-2 focus:ring-[#0B5CAD]/30";
 
 export function FormMasuk() {
   const params = useSearchParams();
@@ -15,26 +16,27 @@ export function FormMasuk() {
   return (
     <form action={aksi} className="flex flex-col gap-4">
       <input type="hidden" name="lanjut" value={params.get("lanjut") ?? ""} />
-      <label className="flex flex-col gap-1.5 text-sm font-semibold">
-        Email
-        <input name="email" type="email" autoComplete="email" required className={kelasInput} />
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm font-semibold">
-        Kata sandi
-        <input name="password" type="password" autoComplete="current-password" required className={kelasInput} />
-      </label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="email" className="text-sm font-semibold">
+          Email
+        </Label>
+        <Input id="email" name="email" type="email" autoComplete="email" required className="h-12 bg-card text-base" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="password" className="text-sm font-semibold">
+          Kata sandi
+        </Label>
+        <Input id="password" name="password" type="password" autoComplete="current-password" required className="h-12 bg-card text-base" />
+      </div>
       {(status.pesan || galatDemo) && (
-        <p role="alert" className="rounded-xl border border-[#F3D9AE] bg-[#FFF6E8] px-4 py-3 text-sm font-semibold text-[#5A2A00]">
+        <p role="alert" className="flex items-start gap-2 rounded-lg bg-peringatan-bg px-4 py-3 text-sm font-semibold text-peringatan-teks">
+          <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
           {status.pesan ?? "Akun demo belum siap. Hubungi tim pengembang."}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={menunggu}
-        className="h-14 rounded-2xl bg-[#0B5CAD] text-lg font-bold text-white transition hover:bg-[#08467F] disabled:opacity-60"
-      >
+      <Button type="submit" disabled={menunggu} className="h-12 text-base font-semibold">
         {menunggu ? "Memproses…" : "Masuk"}
-      </button>
+      </Button>
     </form>
   );
 }
