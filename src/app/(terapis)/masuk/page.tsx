@@ -1,4 +1,4 @@
-import { PlayCircle } from "lucide-react";
+import { ArrowLeft, PlayCircle } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -12,9 +12,17 @@ export const metadata: Metadata = { title: "Masuk Fisioterapis · GerakPulih" };
 export default function HalamanMasuk() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-8 px-5 py-10">
-      <Link href="/" className="flex w-fit items-center gap-2 font-heading text-lg font-bold tracking-tight text-primary">
-        <Logo /> GerakPulih
-      </Link>
+      <div className="flex flex-col gap-4">
+        <Link
+          href="/"
+          className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <ArrowLeft aria-hidden className="size-4" /> Kembali ke beranda situs
+        </Link>
+        <p className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight text-primary">
+          <Logo /> GerakPulih
+        </p>
+      </div>
 
       <div className="flex flex-col gap-2">
         <h1 className="font-heading text-[28px] leading-tight font-bold tracking-tight">Masuk fisioterapis</h1>

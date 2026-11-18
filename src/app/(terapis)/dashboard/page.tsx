@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AktivitasTerbaru } from "@/components/terapis/aktivitas-terbaru";
 import { AreaTindakLanjut } from "@/components/terapis/area-tindak-lanjut";
-import { KepalaTerapis } from "@/components/terapis/kepala-terapis";
-import { MemuatHalaman } from "@/components/terapis/memuat";
+import { MemuatDashboard } from "@/components/terapis/memuat";
 import { TabelPasien } from "@/components/terapis/tabel-pasien";
+import { AngkaNaik } from "@/components/shared/angka-naik";
+import { KeadaanKosong } from "@/components/shared/keadaan-kosong";
 import { buttonVariants } from "@/components/ui/button";
 import { dataDashboard } from "@/lib/terapis/data";
 import { aktivitasTerbaru, angkaDashboard, barisDaftarPasien } from "@/lib/terapis/olah";
@@ -15,7 +16,7 @@ export const metadata: Metadata = { title: "Dashboard · GerakPulih" };
 
 export default function HalamanDashboard() {
   return (
-    <Suspense fallback={<MemuatHalaman />}>
+    <Suspense fallback={<MemuatDashboard />}>
       <IsiDashboard />
     </Suspense>
   );
@@ -33,7 +34,6 @@ async function IsiDashboard() {
 
   return (
     <>
-      <KepalaTerapis nama={terapis.nama} institusi={terapis.institusi} />
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-muted-foreground first-letter:uppercase">{TANGGAL.format(sekarang)}</p>
@@ -79,36 +79,50 @@ async function IsiDashboard() {
   );
 }
 
-/** Satu angka utama (kepatuhan) + dua pendukung, bukan tiga kartu kembar. */
+/** Satu angka utama (kepatuhan, dengan cincin) + dua pendukung, bukan tiga kartu kembar. */
 function AngkaRingkas(a: ReturnType<typeof angkaDashboard>) {
-  const persen = a.persenKepatuhan ?? 0;
+  const persen = Math.min(100, a.persenKepatuhan ?? 0);
   return (
-    <section aria-labelledby="judul-angka" className="rounded-xl bg-mint p-5">
+    <section aria-labelledby="judul-angka" className="gp-tekstur rounded-xl bg-mint p-5">
       <h2 id="judul-angka" className="text-sm font-medium text-secondary-foreground">
         Kepatuhan latihan 7 hari
       </h2>
-      <p className="mt-1 font-heading text-5xl font-bold tracking-tight text-primary tabular-nums">
-        {a.persenKepatuhan == null ? "—" : `${persen}%`}
-      </p>
-      <div
-        className="mt-3 h-2 overflow-hidden rounded-full bg-card"
-        role="progressbar"
-        aria-valuenow={persen}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Kepatuhan latihan"
-      >
-        <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.min(100, persen)}%` }} />
+      <div className="mt-3 flex items-center gap-5">
+        <svg viewBox="0 0 88 88" className="size-24 shrink-0 -rotate-90" aria-hidden>
+          <circle cx="44" cy="44" r="36" fill="none" stroke="var(--card)" strokeWidth="10" />
+          <circle
+            cx="44"
+            cy="44"
+            r="36"
+            fill="none"
+            stroke="var(--primary)"
+            strokeWidth="10"
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray="100"
+            strokeDashoffset={100 - persen}
+            className="gp-cincin"
+          />
+        </svg>
+        <div>
+          <p className="font-heading text-5xl font-bold tracking-tight text-primary">
+            {a.persenKepatuhan == null ? "—" : <AngkaNaik nilai={a.persenKepatuhan} akhiran="%" />}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Hari berlatih ÷ 7 hari, rata-rata pasien dengan link aktif.</p>
+        </div>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Hari berlatih ÷ 7 hari, rata-rata pasien dengan link aktif.</p>
       <dl className="mt-5 grid grid-cols-2 divide-x divide-primary/15 border-t border-primary/15 pt-4">
         <div className="pr-4">
           <dt className="text-xs text-muted-foreground">Sesi 7 hari</dt>
-          <dd className="font-heading text-2xl font-bold tabular-nums">{a.sesi7Hari}</dd>
+          <dd className="font-heading text-2xl font-bold">
+            <AngkaNaik nilai={a.sesi7Hari} />
+          </dd>
         </div>
         <div className="pl-4">
           <dt className="text-xs text-muted-foreground">Pasien aktif</dt>
-          <dd className="font-heading text-2xl font-bold tabular-nums">{a.pasienAktif}</dd>
+          <dd className="font-heading text-2xl font-bold">
+            <AngkaNaik nilai={a.pasienAktif} />
+          </dd>
         </div>
       </dl>
     </section>
@@ -117,15 +131,15 @@ function AngkaRingkas(a: ReturnType<typeof angkaDashboard>) {
 
 function KosongPasien() {
   return (
-    <section className="flex flex-col items-start gap-4 rounded-xl border border-dashed border-primary/30 bg-mint-pucat p-8">
-      <h2 className="font-heading text-xl font-semibold">Belum ada pasien</h2>
-      <p className="max-w-prose text-muted-foreground">
-        Tambahkan pasien, lalu kirim link latihan lewat WhatsApp. Pasien tidak perlu membuat akun, dan video latihan tidak pernah keluar
-        dari HP mereka.
-      </p>
-      <Link href="/pasien/baru" className={cn(buttonVariants(), "h-11 px-5 text-base")}>
-        Tambah pasien pertama
-      </Link>
-    </section>
+    <KeadaanKosong
+      judul="Belum ada pasien"
+      sudut={30}
+      isi="Tambahkan pasien, lalu kirim link latihan lewat WhatsApp. Pasien tidak perlu membuat akun, dan video latihan tidak pernah keluar dari HP mereka."
+      aksi={
+        <Link href="/pasien/baru" className={cn(buttonVariants(), "h-11 px-5 text-base")}>
+          Tambah pasien pertama
+        </Link>
+      }
+    />
   );
 }

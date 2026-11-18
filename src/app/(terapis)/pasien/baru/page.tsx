@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FormPasienBaru } from "@/components/terapis/form-pasien-baru";
-import { KepalaTerapis } from "@/components/terapis/kepala-terapis";
 import { MemuatHalaman } from "@/components/terapis/memuat";
 import { wajibTerapis } from "@/lib/auth/terapis";
 
@@ -18,13 +17,12 @@ export default function HalamanPasienBaru() {
 }
 
 async function IsiPasienBaru() {
-  const terapis = await wajibTerapis();
+  await wajibTerapis();
   return (
     <>
-      <KepalaTerapis nama={terapis.nama} institusi={terapis.institusi} />
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
         <Link href="/dashboard" className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft aria-hidden className="size-4" /> Semua pasien
+          <ArrowLeft aria-hidden className="size-4" /> Kembali ke dashboard
         </Link>
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-[28px] leading-tight font-bold tracking-tight">Tambah pasien</h1>

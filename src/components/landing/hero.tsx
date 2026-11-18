@@ -1,4 +1,5 @@
 import { ArrowRight, Stethoscope, UserX, VideoOff } from "lucide-react";
+import { BusurSudut } from "@/components/ilustrasi/busur-sudut";
 import { IlustrasiHp } from "./ilustrasi-hp";
 import { kelasCtaKedua, kelasCtaUtama } from "./kelas";
 
@@ -14,7 +15,9 @@ const KEPERCAYAAN = [
  */
 export function Hero() {
   return (
-    <section id="konten" tabIndex={-1} aria-labelledby="judul-hero" className="scroll-mt-20 overflow-x-clip bg-mint-pucat outline-none">
+    <section id="konten" tabIndex={-1} aria-labelledby="judul-hero" className="relative isolate scroll-mt-20 overflow-x-clip outline-none">
+      {/* Motif busur besar & samar di belakang teks (dekoratif) */}
+      <BusurSudut nada="halus" sudut={92} className="pointer-events-none absolute -bottom-10 -left-24 -z-10 hidden w-[560px] lg:block" />
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-8 pb-16 sm:px-6 sm:pt-12 lg:min-h-[min(calc(100svh-4rem),880px)] lg:grid-cols-[1.2fr_1fr] lg:py-12">
         <div className="flex flex-col gap-5 sm:gap-6">
           <p className="text-xs font-semibold tracking-[0.12em] text-primary uppercase sm:text-sm">Untuk fisioterapis & pasien pasca-stroke</p>

@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { IlustrasiGerakan } from "@/components/ilustrasi/ilustrasi-gerakan";
 import { GERAKAN, type KodeGerakan } from "@/lib/pose/exercises";
+import type { Sisi } from "@/lib/pose/landmarks";
 import { cn } from "@/lib/utils";
 
 export type BarisProgramForm = { kode: KodeGerakan; aktif: boolean; target_sudut: number; repetisi: number; urutan: number };
@@ -17,7 +19,7 @@ const PENJELASAN_SUDUT: Record<KodeGerakan, string> = {
   tekuk_siku: "Sudut tekukan siku dari posisi lurus.",
 };
 
-function BarisGerakan({ b }: { b: BarisProgramForm }) {
+function BarisGerakan({ b, sisi }: { b: BarisProgramForm; sisi: Sisi }) {
   const [aktif, setAktif] = useState(b.aktif);
   const g = GERAKAN[b.kode];
   return (
@@ -32,6 +34,7 @@ function BarisGerakan({ b }: { b: BarisProgramForm }) {
           className="mt-1"
           aria-describedby={`${b.kode}-ket`}
         />
+        <IlustrasiGerakan kode={b.kode} sisi={sisi} animasi={aktif} className={cn("h-16 w-auto shrink-0", !aktif && "opacity-50")} />
         <div>
           <Label htmlFor={`${b.kode}-aktif`} className="text-base font-semibold">
             {g.nama}
@@ -99,13 +102,13 @@ function BarisGerakan({ b }: { b: BarisProgramForm }) {
   );
 }
 
-export function FormProgram({ pasienId, baris }: { pasienId: string; baris: BarisProgramForm[] }) {
+export function FormProgram({ pasienId, sisi, baris }: { pasienId: string; sisi: Sisi; baris: BarisProgramForm[] }) {
   const [status, aksi, menunggu] = useActionState<StatusAksi, FormData>(simpanProgram, { status: "awal" });
   return (
     <form action={aksi} className="overflow-hidden rounded-xl border border-border bg-card">
       <input type="hidden" name="pasien_id" value={pasienId} />
       {baris.map((b) => (
-        <BarisGerakan key={b.kode} b={b} />
+        <BarisGerakan key={b.kode} b={b} sisi={sisi} />
       ))}
       <div className="flex flex-col gap-3 border-t border-border bg-mint-pucat px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <p aria-live="polite" className={cn("text-sm", status.status === "galat" ? "font-medium text-bahaya" : "text-muted-foreground")}>

@@ -1,43 +1,33 @@
-import { LogOut, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { keluar } from "@/app/(terapis)/masuk/actions";
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NavTerapis } from "./nav-terapis";
 
-/** Header ringan tanpa sidebar: ruang kerja tetap lebar di laptop & HP. */
-export function KepalaTerapis({ nama, institusi }: { nama: string; institusi: string | null }) {
+/** Header ruang kerja terapis (tanpa sidebar): dipasang lewat layout dashboard/ dan pasien/. */
+export function KepalaTerapis({ nama, email }: { nama: string; email: string | null }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 rounded-md font-heading text-lg font-bold tracking-tight text-primary focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
+      <div className="relative mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
+        <Link
+          href="/dashboard"
+          className="flex shrink-0 items-center gap-2 rounded-md font-heading text-lg font-bold tracking-tight text-primary focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
           <Logo />
           GerakPulih
         </Link>
-        <span className="hidden text-sm text-muted-foreground md:inline">· Ruang kerja fisioterapis</span>
-
-        <div className="ml-auto flex items-center gap-2">
-          <Link href="/pasien/baru" className={cn(buttonVariants(), "h-10 gap-2 px-3 text-sm sm:px-4")}>
-            <UserPlus aria-hidden className="size-4" />
-            <span className="hidden sm:inline">Tambah pasien</span>
-            <span className="sr-only sm:hidden">Tambah pasien</span>
-          </Link>
-          <div className="hidden text-right leading-tight lg:block">
-            <p className="text-sm font-semibold">{nama}</p>
-            {institusi && <p className="text-xs text-muted-foreground">{institusi}</p>}
-          </div>
-          <form action={keluar}>
-            <button
-              type="submit"
-              className={cn(buttonVariants({ variant: "ghost" }), "h-10 gap-2 px-3 text-sm text-muted-foreground")}
-            >
-              <LogOut aria-hidden className="size-4" />
-              <span className="hidden sm:inline">Keluar</span>
-              <span className="sr-only sm:hidden">Keluar</span>
-            </button>
-          </form>
-        </div>
+        <NavTerapis nama={nama} email={email} />
       </div>
     </header>
+  );
+}
+
+/** Kerangka header saat data terapis dimuat (tinggi sama agar tidak melompat). */
+export function KerangkaKepalaTerapis() {
+  return (
+    <div className="sticky top-0 z-30 h-16 border-b border-border bg-card/95">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 font-heading text-lg font-bold text-primary sm:px-6">
+        <Logo /> GerakPulih
+      </div>
+    </div>
   );
 }
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PeringatanBrowser } from "@/components/pasien/peringatan-browser";
 import { KirimTertunda } from "@/components/sesi/kirim-tertunda";
-import { Logo } from "@/components/terapis/kepala-terapis";
+import { KepalaPasien } from "@/components/pasien/kepala-pasien";
 import { namaHariPendek, ringkasMingguIni } from "@/lib/pasien/beranda";
 import { wajibPasien } from "@/lib/pasien/sesi";
 import { isKodeGerakan } from "@/lib/pose/exercises";
@@ -16,11 +16,15 @@ export const metadata: Metadata = { title: "Latihan hari ini · GerakPulih" };
 
 export default function HalamanBeranda() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-5 py-6">
-      <div className="flex items-center gap-2 font-heading text-lg font-bold text-primary">
-        <Logo /> GerakPulih
-      </div>
-      <Suspense fallback={<p className="text-xl text-muted-foreground">Menyiapkan latihan…</p>}>
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-5 pb-8">
+      <Suspense
+        fallback={
+          <>
+            <KepalaPasien />
+            <p className="text-xl text-muted-foreground">Menyiapkan latihan…</p>
+          </>
+        }
+      >
         <IsiBeranda />
       </Suspense>
     </main>
@@ -43,11 +47,12 @@ async function IsiBeranda() {
 
   return (
     <>
+      <KepalaPasien nama={pasien.nama_tampilan} />
       <PeringatanBrowser />
 
       <div className="flex flex-col gap-1">
-        <h1 className="font-heading text-[32px] leading-tight font-bold">Halo, {pasien.nama_tampilan}</h1>
-        <p className="text-xl text-muted-foreground">{minggu.hariIni ? "Latihan hari ini sudah tercatat. Hebat!" : "Siap latihan hari ini?"}</p>
+        {/* Sapaan nama sudah ada di header; judul berisi status hari ini. */}
+        <h1 className="font-heading text-[30px] leading-tight font-bold">{minggu.hariIni ? "Latihan hari ini sudah tercatat. Hebat!" : "Siap latihan hari ini?"}</h1>
       </div>
 
       <section aria-labelledby="judul-minggu" className="flex flex-col gap-4 rounded-2xl bg-mint p-5">
@@ -55,9 +60,11 @@ async function IsiBeranda() {
           <CalendarCheck aria-hidden className="size-6 text-primary" />
           Minggu ini: {minggu.jumlah} kali latihan
         </h2>
-        <ol className="grid grid-cols-7 gap-1.5">
+        {/* "Jejak" 7 hari: garis tipis menghubungkan hari; centang muncul berurutan untuk hari yang sudah latihan */}
+        <ol className="relative grid grid-cols-7 gap-1.5">
+          <span aria-hidden className="absolute top-5 right-[7%] left-[7%] h-0.5 -translate-y-1/2 rounded-full bg-primary/20" />
           {minggu.hari.map((h, i) => (
-            <li key={h.tanggal} className="flex flex-col items-center gap-1.5">
+            <li key={h.tanggal} className="relative flex flex-col items-center gap-1.5">
               <span
                 className={cn(
                   "flex size-10 items-center justify-center rounded-full",
@@ -65,7 +72,7 @@ async function IsiBeranda() {
                   i === 6 && "ring-2 ring-primary ring-offset-2 ring-offset-mint",
                 )}
               >
-                {h.ada && <Check aria-hidden className="size-5" />}
+                {h.ada && <Check aria-hidden className="size-5 animate-gp-centang" style={{ animationDelay: `${i * 90}ms` }} />}
                 <span className="sr-only">{h.ada ? "berlatih" : "tidak berlatih"}</span>
               </span>
               <span className={cn("text-base", i === 6 ? "font-bold" : "text-muted-foreground")}>{i === 6 ? "Hari ini" : namaHariPendek(h.tanggal)}</span>
@@ -101,7 +108,7 @@ async function IsiBeranda() {
       {daftar.length > 0 && (
         <Link
           href="/sesi"
-          className="inline-flex min-h-16 w-full items-center justify-center rounded-xl bg-primary px-5 text-xl font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex min-h-16 w-full animate-gp-denyut items-center justify-center rounded-xl bg-primary px-5 text-xl font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 active:translate-y-px focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           Mulai latihan
         </Link>

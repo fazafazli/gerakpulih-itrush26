@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { KeadaanKosong } from "@/components/shared/keadaan-kosong";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import type { KodeGerakan } from "@/lib/pose/exercises";
 import { labelTanggal, ringkasSeri, type TitikProgres } from "@/lib/terapis/olah";
@@ -31,7 +32,14 @@ export function GrafikProgres({ seri }: { seri: SeriGerakan[] }) {
   const aktif = seri.find((s) => s.kode === pilih) ?? seri[0];
 
   if (!aktif) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">Grafik muncul setelah pasien menyelesaikan sesi pertama.</p>;
+    return (
+      <KeadaanKosong
+        ringkas
+        sudut={20}
+        judul="Belum ada sesi latihan"
+        isi="Grafik jangkauan gerak muncul setelah pasien menyelesaikan sesi pertama dari link latihannya."
+      />
+    );
   }
 
   const r = ringkasSeri(aktif.titik);

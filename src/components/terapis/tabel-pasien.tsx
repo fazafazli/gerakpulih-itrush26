@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type BarisDaftar, labelRelatif } from "@/lib/terapis/olah";
 import { LencanaStatus } from "./lencana-status";
+import { Sparkline } from "./sparkline";
 
 function Capaian({ b }: { b: BarisDaftar }) {
   if (!b.sorotan) return <span className="text-muted-foreground">—</span>;
@@ -16,6 +17,11 @@ function Capaian({ b }: { b: BarisDaftar }) {
         {capai && <span className="sr-only"> (target tercapai)</span>}
       </span>
       <span className="text-xs text-muted-foreground">{nama}</span>
+      {b.tren.length > 1 && (
+        <span className="mt-1">
+          <Sparkline nilai={b.tren} />
+        </span>
+      )}
     </span>
   );
 }
@@ -40,7 +46,10 @@ export function TabelPasien({ baris, sekarang }: { baris: BarisDaftar[]; sekaran
           </TableHeader>
           <TableBody>
             {baris.map((b) => (
-              <TableRow key={b.id} className="group relative hover:bg-mint-pucat">
+              <TableRow
+                key={b.id}
+                className="group relative transition-[background-color,box-shadow] hover:bg-mint-pucat hover:shadow-[inset_3px_0_0_var(--primary)] focus-within:bg-mint-pucat focus-within:shadow-[inset_3px_0_0_var(--primary)]"
+              >
                 <TableCell className="py-3 pl-5">
                   <Link href={`/pasien/${b.id}`} className="font-semibold after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-3 focus-visible:after:ring-ring/50">
                     {b.nama}
@@ -59,7 +68,10 @@ export function TabelPasien({ baris, sekarang }: { baris: BarisDaftar[]; sekaran
                 </TableCell>
                 <TableCell className="text-muted-foreground">{b.terakhirSesi ? labelRelatif(b.terakhirSesi, sekarang) : "Belum ada"}</TableCell>
                 <TableCell className="pr-5">
-                  <ChevronRight aria-hidden className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                  <ChevronRight
+                    aria-hidden
+                    className="size-4 text-muted-foreground opacity-40 transition-[transform,opacity] group-focus-within:translate-x-1 group-focus-within:opacity-100 group-hover:translate-x-1 group-hover:opacity-100"
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -70,17 +82,25 @@ export function TabelPasien({ baris, sekarang }: { baris: BarisDaftar[]; sekaran
       <ul className="divide-y divide-border md:hidden">
         {baris.map((b) => (
           <li key={b.id}>
-            <Link href={`/pasien/${b.id}`} className="flex items-center gap-3 px-4 py-3.5 hover:bg-mint-pucat focus-visible:bg-mint-pucat focus-visible:outline-none">
+            <Link
+              href={`/pasien/${b.id}`}
+              className="group flex items-center gap-3 px-4 py-3.5 transition-[background-color,box-shadow] hover:bg-mint-pucat hover:shadow-[inset_3px_0_0_var(--primary)] focus-visible:bg-mint-pucat focus-visible:shadow-[inset_3px_0_0_var(--primary)] focus-visible:outline-none"
+            >
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{b.nama}</span>
                   <LencanaStatus status={b.status} />
                 </span>
+                {b.tren.length > 1 && (
+                  <span className="mt-1.5 block">
+                    <Sparkline nilai={b.tren} />
+                  </span>
+                )}
                 <span className="mt-1 block text-sm text-muted-foreground">
                   {b.sesi7Hari} sesi minggu ini · {b.terakhirSesi ? labelRelatif(b.terakhirSesi, sekarang) : "belum ada sesi"}
                 </span>
               </span>
-              <ChevronRight aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+              <ChevronRight aria-hidden className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-focus-visible:translate-x-1" />
             </Link>
           </li>
         ))}

@@ -2,6 +2,7 @@
 
 import { CircleAlert, FileText, History, RefreshCw, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { BusurSudut } from "@/components/ilustrasi/busur-sudut";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RingkasanSchema, type Ringkasan } from "@/lib/ai/schema";
@@ -70,7 +71,9 @@ export function KartuRingkasan({
   }
 
   return (
-    <section aria-labelledby="judul-ringkasan" className="rounded-xl border border-primary/15 bg-mint p-5">
+    <section aria-labelledby="judul-ringkasan" className="relative isolate overflow-hidden rounded-xl border border-primary/15 bg-mint p-5">
+      {/* Motif busur samar di sudut kartu (dekoratif) */}
+      <BusurSudut nada="halus" sudut={110} className="pointer-events-none absolute -right-12 -bottom-12 -z-10 w-40" />
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="judul-ringkasan" className="flex items-center gap-2 font-heading text-lg font-semibold">

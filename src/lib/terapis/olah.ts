@@ -194,6 +194,8 @@ export type BarisDaftar = {
   nyeriTerbuka: number;
   /** Gerakan dengan capaian terendah terhadap target pada sesi terakhir yang berisi data gerakan. */
   sorotan: SorotanGerakan | null;
+  /** Puncak sudut gerakan sorotan pada sesi-sesi terakhir (untuk sparkline), urut waktu. */
+  tren: number[];
 };
 
 /** Dari sesi terbaru yang punya data gerakan (sesi yang langsung dihentikan bisa kosong). */
@@ -231,6 +233,7 @@ export function barisDaftarPasien(args: {
       const milik = sesiPer.get(p.id) ?? [];
       const terakhir = milik.at(-1);
       const nyeri = nyeriPer.get(p.id) ?? 0;
+      const sorot = sorotanDari(milik);
       return {
         id: p.id,
         nama: p.nama_tampilan,
@@ -241,7 +244,8 @@ export function barisDaftarPasien(args: {
         sesi7Hari: milik.filter((s) => selisihHari(s.mulai, args.sekarang) < 7).length,
         terakhirSesi: terakhir?.mulai ?? null,
         nyeriTerbuka: nyeri,
-        sorotan: sorotanDari(milik),
+        sorotan: sorot,
+        tren: sorot ? seriSparkline(milik, sorot.kode) : [],
       };
     })
     .sort((a, b) => URUTAN_STATUS[a.status] - URUTAN_STATUS[b.status] || a.nama.localeCompare(b.nama, "id"));
@@ -292,6 +296,29 @@ export function ringkasanUsang(args: {
   if (args.nyeriTerbuka.some((k) => Date.parse(k.terjadi_pada) > dibuat)) return "nyeri";
   if (args.sesiTerakhir && Date.parse(args.sesiTerakhir) > dibuat) return "sesi";
   return null;
+}
+
+// ---------- Sparkline ----------
+
+/** Puncak sudut satu gerakan pada `n` sesi terakhir (urut waktu), tanpa sesi yang puncaknya kosong. */
+export function seriSparkline(sesi: readonly BarisSesiTerapis[], kode: KodeGerakan, n = 8): number[] {
+  return seriProgres(sesi, kode)
+    .flatMap((t) => (t.puncak == null ? [] : [t.puncak]))
+    .slice(-n);
+}
+
+/**
+ * Jalur SVG sparkline dalam kotak lebar×tinggi (dengan bantalan agar ujung garis tidak terpotong).
+ * Rentang sumbu Y mengikuti data (minimal 10° agar data datar tidak terlihat berfluktuasi). null bila < 2 titik.
+ */
+export function jalurSparkline(nilai: readonly number[], lebar: number, tinggi: number, bantal = 2): string | null {
+  if (nilai.length < 2) return null;
+  const min = Math.min(...nilai);
+  const rentang = Math.max(10, Math.max(...nilai) - min);
+  const bawah = (Math.max(...nilai) + min) / 2 - rentang / 2;
+  const x = (i: number) => bantal + (i / (nilai.length - 1)) * (lebar - 2 * bantal);
+  const y = (v: number) => tinggi - bantal - ((v - bawah) / rentang) * (tinggi - 2 * bantal);
+  return nilai.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
 }
 
 // ---------- Aktivitas terbaru ----------

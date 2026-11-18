@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CircleCheck, CloudOff, HeartPulse, LoaderCircle, PartyPopper, Phone, TriangleAlert } from "lucide-react";
+import { CircleCheck, CloudOff, HeartPulse, LoaderCircle, Phone, TriangleAlert } from "lucide-react";
+import { BusurSudut } from "@/components/ilustrasi/busur-sudut";
 import { PenandaLangkah } from "./langkah";
 import { TombolKedua } from "./tombol";
 
@@ -82,7 +83,11 @@ export function LayarSelesai(props: {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <PartyPopper aria-hidden className="size-12 text-primary animate-gp-pop" />
+          {/* Perayaan ringan: busur motif "terisi" + centang (bukan confetti) */}
+          <div aria-hidden className="relative w-32">
+            <BusurSudut nada="sukses" sudut={180} gambar className="w-32" />
+            <CircleCheck className="absolute -right-2 -bottom-1 size-10 animate-gp-centang rounded-full bg-card text-sukses [animation-delay:700ms]" />
+          </div>
           <h1 className="font-heading text-[32px] font-bold leading-tight">Hebat, {props.nama}!</h1>
           <p className="text-xl text-muted-foreground">Latihan hari ini selesai.</p>
         </div>
@@ -110,7 +115,7 @@ export function LayarSelesai(props: {
         href="/beranda"
         className="inline-flex min-h-16 w-full items-center justify-center rounded-xl bg-primary px-5 text-xl font-bold text-primary-foreground hover:bg-primary/90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        Selesai
+        Kembali ke beranda
       </Link>
     </div>
   );

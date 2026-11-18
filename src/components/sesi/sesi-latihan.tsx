@@ -1,6 +1,7 @@
 "use client";
 
-import { RefreshCw, TriangleAlert, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, DoorOpen, RefreshCw, TriangleAlert, Volume2, VolumeX } from "lucide-react";
+import Link from "next/link";
 import { type SyntheticEvent, useCallback, useEffect, useRef, useState } from "react";
 import { PESAN_KAMERA, useKamera } from "@/hooks/use-kamera";
 import { useKemiringanHp } from "@/hooks/use-kemiringan-hp";
@@ -23,6 +24,7 @@ import { type BarisHasil, LayarSelesai, type StatusKirim } from "./layar-selesai
 import { LayarSiapkan } from "./layar-siapkan";
 import { PanelCek } from "./panel-cek";
 import { OverlayLatihan, PanelLatihan, type TampilanLatihan } from "./panel-latihan";
+import { DialogAkhiri } from "./dialog-akhiri";
 import { PanelPengantar } from "./panel-pengantar";
 import { TombolBerhenti, TombolUtama } from "./tombol";
 import { ukurGambar } from "./ukur-gambar";
@@ -68,6 +70,7 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
   const [kirim, setKirim] = useState<StatusKirim>({ status: "mengirim" });
   const [hasilTampil, setHasilTampil] = useState<BarisHasil[]>([]);
   const [rasioVideo, setRasioVideo] = useState(3 / 4);
+  const [akhiriBuka, setAkhiriBuka] = useState(false);
 
   // Data yang berubah tiap frame disimpan di ref agar tidak memicu render 24×/detik.
   const kanvasRef = useRef<HTMLCanvasElement>(null);
@@ -364,10 +367,36 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
   const pesanKamera = PESAN_KAMERA[statusKamera] ?? null;
   const kameraTampil = iAktif != null;
   const p = iAktif != null ? program[iAktif] : null;
+  // Belum ada gerakan tercatat → boleh langsung kembali. Sudah ada → konfirmasi dulu, lalu simpan hasil sebagian.
+  const belumAdaData = tahap.jenis === "siapkan" || ((tahap.jenis === "pengantar" || tahap.jenis === "cek") && tahap.i === 0);
+  const bisaAkhiri = iAktif != null && !belumAdaData;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-4 py-5 text-foreground">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-2">
+        {belumAdaData ? (
+          <Link
+            href="/beranda"
+            // Lampu kamera dimatikan segera, tidak menunggu halaman berganti (unmount juga mematikannya).
+            onClick={() => {
+              matikanKamera();
+              bersihkanKanvas();
+            }}
+            className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-muted-foreground hover:bg-muted focus-visible:outline-3 focus-visible:outline-ring"
+          >
+            <ArrowLeft aria-hidden className="size-5" /> Beranda
+          </Link>
+        ) : bisaAkhiri ? (
+          <button
+            type="button"
+            onClick={() => setAkhiriBuka(true)}
+            className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-muted-foreground hover:bg-muted focus-visible:outline-3 focus-visible:outline-ring"
+          >
+            <DoorOpen aria-hidden className="size-5" /> Akhiri latihan
+          </button>
+        ) : (
+          <span />
+        )}
         <button
           type="button"
           onClick={() => setSuaraAktif(!suaraAktif)}
@@ -381,12 +410,14 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
       </div>
 
       {tahap.jenis === "siapkan" && (
-        <LayarSiapkan
-          meminta={statusKamera === "meminta"}
-          pesanGalat={statusKamera === "terputus" ? null : pesanKamera}
-          onSiap={mulaiSesi}
-          onPutarUlang={() => ucapkan(SUARA_PANDUAN)}
-        />
+        <div className="animate-gp-masuk">
+          <LayarSiapkan
+            meminta={statusKamera === "meminta"}
+            pesanGalat={statusKamera === "terputus" ? null : pesanKamera}
+            onSiap={mulaiSesi}
+            onPutarUlang={() => ucapkan(SUARA_PANDUAN)}
+          />
+        </div>
       )}
 
       {/* Video selalu ada di DOM (tersembunyi saat tidak dipakai) agar stream kamera tidak terputus antar-tahap. */}
@@ -426,39 +457,53 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
           </div>
         )}
 
-        {tahap.jenis === "pengantar" && p && (
-          <PanelPengantar
-            nomor={tahap.i + 1}
-            total={program.length}
-            kode={p.kode}
-            sisi={sisi}
-            repetisi={p.repetisi}
-            onMulai={() => keCek(tahap.i)}
-            onLewati={() => (tahap.i + 1 < program.length ? keGerakan(tahap.i + 1) : selesaiSesi(false))}
-          />
-        )}
-        {tahap.jenis === "cek" && !pose.galat && <PanelCek memuat={!pose.mesin} instruksi={cek.instruksi} item={cek.item} siap={cek.siap} />}
-        {tahap.jenis === "latihan" && p && (
-          <PanelLatihan
-            nomor={tahap.i + 1}
-            total={program.length}
-            nama={namaDenganSisi(p.kode, sisi)}
-            capai={tampil.capai}
-            onSelesaiGerakan={() => selesaikanGerakan(tahap.i)}
-          />
-        )}
+        {/* Panel di bawah video berganti dengan transisi pendek; video & kanvas di atas TIDAK di-remount. */}
+        <div key={iAktif != null ? `${tahap.jenis}-${iAktif}` : tahap.jenis} className="flex flex-col gap-4 animate-gp-masuk">
+          {tahap.jenis === "pengantar" && p && (
+            <PanelPengantar
+              nomor={tahap.i + 1}
+              total={program.length}
+              kode={p.kode}
+              sisi={sisi}
+              repetisi={p.repetisi}
+              onMulai={() => keCek(tahap.i)}
+              onLewati={() => (tahap.i + 1 < program.length ? keGerakan(tahap.i + 1) : selesaiSesi(false))}
+            />
+          )}
+          {tahap.jenis === "cek" && !pose.galat && <PanelCek memuat={!pose.mesin} instruksi={cek.instruksi} item={cek.item} siap={cek.siap} />}
+          {tahap.jenis === "latihan" && p && (
+            <PanelLatihan
+              nomor={tahap.i + 1}
+              total={program.length}
+              nama={namaDenganSisi(p.kode, sisi)}
+              capai={tampil.capai}
+              onSelesaiGerakan={() => selesaikanGerakan(tahap.i)}
+            />
+          )}
+        </div>
 
         <TombolBerhenti onClick={berhentiNyeri} />
       </div>
 
+      <DialogAkhiri
+        buka={akhiriBuka}
+        onBukaBerubah={setAkhiriBuka}
+        onAkhiri={() => {
+          setAkhiriBuka(false);
+          selesaiSesi(false);
+        }}
+      />
+
       {tahap.jenis === "selesai" && (
-        <LayarSelesai
-          nama={nama}
-          nyeri={tahap.nyeri}
-          hasil={hasilTampil}
-          kirim={kirim}
-          onKirimUlang={() => kirimanRef.current && void kirimkan(kirimanRef.current)}
-        />
+        <div className="animate-gp-masuk">
+          <LayarSelesai
+            nama={nama}
+            nyeri={tahap.nyeri}
+            hasil={hasilTampil}
+            kirim={kirim}
+            onKirimUlang={() => kirimanRef.current && void kirimkan(kirimanRef.current)}
+          />
+        </div>
       )}
     </main>
   );

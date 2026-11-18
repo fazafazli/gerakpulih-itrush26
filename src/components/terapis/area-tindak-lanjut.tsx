@@ -1,5 +1,6 @@
-import { ArrowRight, CircleAlert, CirclePause, ShieldCheck } from "lucide-react";
+import { ArrowRight, CircleAlert, CirclePause } from "lucide-react";
 import Link from "next/link";
+import { KeadaanKosong } from "@/components/shared/keadaan-kosong";
 import { GERAKAN, isKodeGerakan } from "@/lib/pose/exercises";
 import { type BarisDaftar, labelRelatif, selisihHari } from "@/lib/terapis/olah";
 
@@ -21,10 +22,13 @@ export function AreaTindakLanjut({ nyeri, baris, sekarang }: { nyeri: Nyeri[]; b
       </div>
 
       {kosong ? (
-        <div className="flex items-center gap-3 px-5 py-6 text-sm text-muted-foreground">
-          <ShieldCheck aria-hidden className="size-5 text-sukses" />
-          Tidak ada laporan nyeri atau jeda latihan. Semua pasien berlatih sesuai jadwal.
-        </div>
+        <KeadaanKosong
+          ringkas
+          nada="positif"
+          sudut={150}
+          judul="Semua aman"
+          isi="Tidak ada laporan nyeri atau jeda latihan. Semua pasien berlatih sesuai jadwal."
+        />
       ) : (
         <ul className="divide-y divide-border">
           {nyeri.map((k) => (

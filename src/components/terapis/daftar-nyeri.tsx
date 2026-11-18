@@ -3,6 +3,7 @@
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useActionState } from "react";
 import { type StatusAksi, tandaiDitindaklanjuti } from "@/app/(terapis)/pasien/actions";
+import { KeadaanKosong } from "@/components/shared/keadaan-kosong";
 import { Button } from "@/components/ui/button";
 import { GERAKAN, isKodeGerakan } from "@/lib/pose/exercises";
 import type { KejadianNyeri } from "@/lib/terapis/data";
@@ -55,9 +56,13 @@ function ItemNyeri({ k }: { k: KejadianNyeri }) {
 export function DaftarNyeri({ kejadian }: { kejadian: KejadianNyeri[] }) {
   if (!kejadian.length) {
     return (
-      <p className="flex items-center gap-2 px-5 py-5 text-sm text-muted-foreground">
-        <CircleCheck aria-hidden className="size-4 text-sukses" /> Tidak ada laporan nyeri.
-      </p>
+      <KeadaanKosong
+        ringkas
+        nada="positif"
+        sudut={150}
+        judul="Kabar baik: belum ada laporan nyeri"
+        isi="Bila pasien menekan “Berhenti, terasa sakit”, laporannya muncul di sini dan di dashboard."
+      />
     );
   }
   return (

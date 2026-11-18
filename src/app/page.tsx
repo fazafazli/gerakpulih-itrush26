@@ -20,12 +20,15 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { masukDemo } from "@/app/(terapis)/masuk/actions";
+import { BusurSudut } from "@/components/ilustrasi/busur-sudut";
+import { IlustrasiGerakan } from "@/components/ilustrasi/ilustrasi-gerakan";
 import { Faq } from "@/components/landing/faq";
 import { FooterLanding } from "@/components/landing/footer-landing";
 import { Hero } from "@/components/landing/hero";
 import { kelasCtaUtama, kelasTautan } from "@/components/landing/kelas";
 import { NavbarLanding } from "@/components/landing/navbar-landing";
 import { PenandaMuncul } from "@/components/landing/penanda-muncul";
+import { GERAKAN, KODE_GERAKAN } from "@/lib/pose/exercises";
 import { qrDataUrl } from "@/lib/qr";
 import { originPublik } from "@/lib/situs";
 import { cn } from "@/lib/utils";
@@ -110,16 +113,19 @@ export default async function Beranda() {
 
       {/* Navbar sticky menumpang di atas hero (latar hero ikut terlihat saat navbar transparan). */}
       <main className="-mt-16">
-        <div className="bg-mint-pucat pt-16">
+        <div className="gp-tekstur bg-mint-pucat pt-16">
           <Hero />
         </div>
 
         {/* Masalah: editorial, latar putih */}
         <section aria-labelledby="judul-masalah" className={cn(section, "bg-card")}>
           <div className={cn(wadah, "gp-muncul grid gap-8 md:grid-cols-[1fr_2fr]")}>
-            <h2 id="judul-masalah" className="text-sm font-semibold tracking-[0.12em] text-primary uppercase">
-              Masalahnya
-            </h2>
+            <div className="flex flex-col gap-3">
+              <BusurSudut sudut={40} className="w-16" />
+              <h2 id="judul-masalah" className="text-sm font-semibold tracking-[0.12em] text-primary uppercase">
+                Masalahnya
+              </h2>
+            </div>
             <div className="flex flex-col gap-5 border-l-4 border-teal-segar pl-6">
               <p className="font-heading text-[clamp(1.4rem,1.1rem+1vw,1.85rem)] leading-snug font-medium text-balance">
                 Setelah pulang dari rumah sakit, pasien pasca-stroke melanjutkan latihan lengan sendiri di rumah, sering tanpa ada yang
@@ -134,7 +140,7 @@ export default async function Beranda() {
         </section>
 
         {/* Cara kerja: linimasa, latar soft cyan */}
-        <section id="cara-kerja" aria-labelledby="judul-cara" className={cn(section, "bg-cyan-lembut")}>
+        <section id="cara-kerja" aria-labelledby="judul-cara" className={cn(section, "gp-tekstur bg-cyan-lembut")}>
           <div className={cn(wadah, "gp-muncul")}>
             <h2 id="judul-cara" className={judulSection}>
               Cara kerja
@@ -160,7 +166,16 @@ export default async function Beranda() {
             <h2 id="judul-fitur" className={judulSection}>
               Satu alur, dua pengguna
             </h2>
-            <div className="mt-10 grid overflow-hidden rounded-2xl border border-border md:grid-cols-2">
+            {/* Tiga gerakan lengan yang didukung, dengan contoh gerak yang sama seperti di layar pasien */}
+            <ul className="gp-tekstur mt-10 grid grid-cols-3 gap-2 rounded-2xl bg-mint-pucat px-3 py-6 sm:gap-6 sm:px-8">
+              {KODE_GERAKAN.map((k) => (
+                <li key={k} className="flex flex-col items-center gap-2 text-center">
+                  <IlustrasiGerakan kode={k} className="h-24 w-auto sm:h-32" />
+                  <span className="text-sm font-semibold sm:text-base">{GERAKAN[k].nama}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 grid overflow-hidden rounded-2xl border border-border md:grid-cols-2">
               <div className="flex flex-col gap-5 p-6 sm:p-8">
                 <h3 className="font-heading text-xl font-semibold">Untuk pasien & pendamping</h3>
                 <ul className="flex flex-col gap-4">

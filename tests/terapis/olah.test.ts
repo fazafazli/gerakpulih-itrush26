@@ -7,12 +7,14 @@ import {
   barisDaftarPasien,
   type BarisSesiTerapis,
   gerakanTercatat,
+  jalurSparkline,
   jamWib,
   kepatuhanHarian,
   labelRelatif,
   ringkasanUsang,
   ringkasSeri,
   selisihHari,
+  seriSparkline,
   seriProgres,
   statusPasien,
   tanggalWib,
@@ -227,5 +229,42 @@ describe("ringkasanUsang", () => {
 describe("label status", () => {
   it("tanpa sesi dalam jendela data tidak diklaim 'belum mulai'", () => {
     expect(LABEL_STATUS.belum_mulai).toBe("Belum ada sesi");
+  });
+});
+
+describe("sparkline", () => {
+  it("seriSparkline: puncak gerakan, urut waktu, n terakhir, tanpa puncak kosong", () => {
+    const data = [
+      sesi(BUDI, "2026-11-03T02:00:00.000Z", [g("angkat_samping", 70)]),
+      sesi(BUDI, "2026-11-01T02:00:00.000Z", [g("angkat_samping", 60)]),
+      sesi(BUDI, "2026-11-05T02:00:00.000Z", [g("angkat_samping", null)]),
+      sesi(BUDI, "2026-11-07T02:00:00.000Z", [g("angkat_samping", 80), g("tekuk_siku", 110, 120)]),
+    ];
+    expect(seriSparkline(data, "angkat_samping")).toEqual([60, 70, 80]);
+    expect(seriSparkline(data, "angkat_samping", 2)).toEqual([70, 80]);
+    expect(seriSparkline(data, "tekuk_siku")).toEqual([110]);
+  });
+
+  it("jalurSparkline: null bila < 2 titik; naik = y mengecil; tetap di dalam kotak", () => {
+    expect(jalurSparkline([90], 80, 24)).toBeNull();
+    const j = jalurSparkline([60, 70, 80], 80, 24)!;
+    expect(j.startsWith("M2.0 ")).toBe(true);
+    const ys = [...j.matchAll(/[ML][\d.]+ ([\d.]+)/g)].map((m) => Number(m[1]));
+    expect(ys[0]).toBeGreaterThan(ys[2]);
+    for (const y of ys) {
+      expect(y).toBeGreaterThanOrEqual(2);
+      expect(y).toBeLessThanOrEqual(22);
+    }
+  });
+
+  it("data datar tidak dibesar-besarkan (rentang minimal 10°)", () => {
+    const ys = [...jalurSparkline([90, 91, 90], 80, 24)!.matchAll(/[ML][\d.]+ ([\d.]+)/g)].map((m) => Number(m[1]));
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(3);
+  });
+
+  it("barisDaftarPasien menyertakan tren gerakan sorotan", () => {
+    const pasien = [{ id: BUDI, nama_tampilan: "Pak Budi", sisi_dilatih: "kanan", aktif: true, is_demo: false }];
+    const data = [sesi(BUDI, "2026-11-10T02:00:00.000Z", [g("angkat_samping", 70)]), sesi(BUDI, "2026-11-12T02:00:00.000Z", [g("angkat_samping", 85)])];
+    expect(barisDaftarPasien({ pasien, sesi: data, nyeriTerbuka: [], sekarang: SEKARANG })[0].tren).toEqual([70, 85]);
   });
 });

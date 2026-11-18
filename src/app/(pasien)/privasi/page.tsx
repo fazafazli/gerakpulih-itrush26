@@ -1,4 +1,4 @@
-import { BarChart3, Bot, Eye, Hand, ShieldCheck, VideoOff } from "lucide-react";
+import { ArrowLeft, BarChart3, Bot, Eye, Hand, ShieldCheck, VideoOff } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -24,7 +24,10 @@ const POIN = [
 
 export default function HalamanPrivasi({ searchParams }: { searchParams: Promise<{ lanjut?: string }> }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-5 py-8">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-5 py-6">
+      <Suspense fallback={<div className="h-11" aria-hidden />}>
+        <TautanKembali />
+      </Suspense>
       <div className="flex flex-col gap-2">
         <ShieldCheck aria-hidden className="size-12 text-primary" />
         <h1 className="font-heading text-[30px] leading-tight font-bold">Privasi latihan Anda</h1>
@@ -49,6 +52,19 @@ export default function HalamanPrivasi({ searchParams }: { searchParams: Promise
         <AksiPrivasi searchParams={searchParams} />
       </Suspense>
     </main>
+  );
+}
+
+/** Pasien kembali ke berandanya; pengunjung umum (mis. juri) kembali ke situs. */
+async function TautanKembali() {
+  const pasien = await getPasienSaatIni();
+  return (
+    <Link
+      href={pasien ? "/beranda" : "/"}
+      className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md text-lg font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
+      <ArrowLeft aria-hidden className="size-5" /> {pasien ? "Beranda" : "GerakPulih"}
+    </Link>
   );
 }
 

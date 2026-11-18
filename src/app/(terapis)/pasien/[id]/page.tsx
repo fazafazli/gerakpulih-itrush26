@@ -1,4 +1,4 @@
-import { ArrowLeft, CircleAlert, ShieldAlert, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { CircleAlert, ShieldAlert, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -7,11 +7,12 @@ import { GrafikProgres, type SeriGerakan } from "@/components/terapis/grafik-pro
 import { KalenderKepatuhan } from "@/components/terapis/kalender-kepatuhan";
 import { KartuRingkasan } from "@/components/terapis/kartu-ringkasan";
 import { KelolaLink } from "@/components/terapis/kelola-link";
-import { KepalaTerapis } from "@/components/terapis/kepala-terapis";
+import { IlustrasiGerakan } from "@/components/ilustrasi/ilustrasi-gerakan";
+import { KeadaanKosong } from "@/components/shared/keadaan-kosong";
+import { Breadcrumb } from "@/components/terapis/breadcrumb";
 import { LencanaStatus } from "@/components/terapis/lencana-status";
-import { MemuatHalaman } from "@/components/terapis/memuat";
+import { MemuatDetail } from "@/components/terapis/memuat";
 import { buttonVariants } from "@/components/ui/button";
-import { getTerapisSaatIni } from "@/lib/auth/terapis";
 import { perluCatatPersetujuan } from "@/lib/pasien/persetujuan";
 import { GERAKAN, isKodeGerakan } from "@/lib/pose/exercises";
 import { dataDetailPasien } from "@/lib/terapis/data";
@@ -22,7 +23,7 @@ export const metadata: Metadata = { title: "Detail pasien · GerakPulih" };
 
 export default function HalamanPasien({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={<MemuatHalaman />}>
+    <Suspense fallback={<MemuatDetail />}>
       <IsiPasien params={params} />
     </Suspense>
   );
@@ -31,7 +32,6 @@ export default function HalamanPasien({ params }: { params: Promise<{ id: string
 async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { pasien, program, sesi, kejadian, ringkasan } = await dataDetailPasien(id);
-  const terapis = await getTerapisSaatIni();
   const sekarang = new Date();
 
   const nyeriTerbuka = kejadian.filter((k) => !k.ditindaklanjuti);
@@ -44,11 +44,8 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <>
-      {terapis && <KepalaTerapis nama={terapis.nama} institusi={terapis.institusi} />}
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-        <Link href="/dashboard" className="inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft aria-hidden className="size-4" /> Semua pasien
-        </Link>
+        <Breadcrumb remah={[{ label: "Dashboard", href: "/dashboard" }, { label: pasien.nama_tampilan }]} />
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-2">
@@ -136,8 +133,18 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
               {programAktif.length ? (
                 <ol className="mt-3 divide-y divide-border">
                   {programAktif.map((p) => (
-                    <li key={p.kode_gerakan} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                      <span>{isKodeGerakan(p.kode_gerakan) ? GERAKAN[p.kode_gerakan].nama : p.kode_gerakan}</span>
+                    <li key={p.kode_gerakan} className="flex items-center justify-between gap-3 py-2 text-sm">
+                      <span className="flex items-center gap-3">
+                        {isKodeGerakan(p.kode_gerakan) && (
+                          <IlustrasiGerakan
+                            kode={p.kode_gerakan}
+                            sisi={pasien.sisi_dilatih === "kiri" ? "kiri" : "kanan"}
+                            animasi={false}
+                            className="h-11 w-auto shrink-0 rounded-md bg-mint-pucat"
+                          />
+                        )}
+                        {isKodeGerakan(p.kode_gerakan) ? GERAKAN[p.kode_gerakan].nama : p.kode_gerakan}
+                      </span>
                       <span className="text-muted-foreground tabular-nums">
                         {p.target_sudut}° · {p.repetisi}×
                       </span>
@@ -145,7 +152,13 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
                   ))}
                 </ol>
               ) : (
-                <p className="mt-3 text-sm text-peringatan-teks">Belum ada gerakan aktif. Pasien belum bisa berlatih.</p>
+                <KeadaanKosong
+                  ringkas
+                  sudut={10}
+                  className="-mx-5 mt-2"
+                  judul="Belum ada gerakan aktif"
+                  isi={<span className="text-peringatan-teks">Pasien belum bisa berlatih. Aktifkan minimal satu gerakan.</span>}
+                />
               )}
             </section>
 
