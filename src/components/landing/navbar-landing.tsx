@@ -151,16 +151,6 @@ export function NavbarLanding() {
                   Coba demo
                 </a>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  tutupMenu();
-                  menuRef.current?.querySelector("summary")?.focus();
-                }}
-                className={`mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold text-muted-foreground hover:bg-muted ${fokus}`}
-              >
-                <X aria-hidden className="size-4" /> Tutup menu
-              </button>
             </div>
           </div>
         </details>

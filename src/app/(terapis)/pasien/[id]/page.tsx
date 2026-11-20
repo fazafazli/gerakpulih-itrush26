@@ -88,7 +88,7 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
             </section>
 
             <section aria-labelledby="judul-kepatuhan" className="rounded-xl border border-border bg-card p-5">
-              <div className="mb-4 flex items-baseline justify-between gap-3">
+              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <h2 id="judul-kepatuhan" className="font-heading text-lg font-semibold">
                   Kepatuhan 4 minggu
                 </h2>
@@ -145,7 +145,7 @@ async function IsiPasien({ params }: { params: Promise<{ id: string }> }) {
                         )}
                         {isKodeGerakan(p.kode_gerakan) ? GERAKAN[p.kode_gerakan].nama : p.kode_gerakan}
                       </span>
-                      <span className="text-muted-foreground tabular-nums">
+                      <span className="shrink-0 whitespace-nowrap text-muted-foreground tabular-nums">
                         {p.target_sudut}° · {p.repetisi}×
                       </span>
                     </li>

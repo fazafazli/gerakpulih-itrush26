@@ -55,15 +55,14 @@ export function FooterLanding() {
               Repositori GitHub
             </a>
           </li>
-          <li>
-            {URL_VIDEO_DEMO ? (
+          {/* Disembunyikan sampai tautannya ada, agar juri tidak melihat item "menyusul". */}
+          {URL_VIDEO_DEMO && (
+            <li>
               <a href={URL_VIDEO_DEMO} rel="noopener noreferrer" className={`${kelasTautan} text-sm`}>
                 Video demo
               </a>
-            ) : (
-              <span className="inline-flex min-h-11 items-center text-sm text-muted-foreground">Video demo (menyusul)</span>
-            )}
-          </li>
+            </li>
+          )}
           <li>
             <a href={`${URL_REPO}#readme`} rel="noopener noreferrer" className={`${kelasTautan} text-sm`}>
               Dokumentasi (README)
@@ -82,8 +81,7 @@ export function FooterLanding() {
 
       <div className="border-t border-border">
         <p className="mx-auto max-w-6xl px-4 py-5 text-xs leading-relaxed text-muted-foreground sm:px-6">
-          Karya untuk IT RUSH 2026 — Web Development, HIMATIF UNIB · [Nama Tim] · 2026 · Dikembangkan dengan bantuan AI coding assistant;
-          lihat README.
+          Karya untuk IT RUSH 2026 — Web Development, HIMATIF UNIB · Abis PIMNAS gatau mau ngapain · 2026
         </p>
       </div>
     </footer>

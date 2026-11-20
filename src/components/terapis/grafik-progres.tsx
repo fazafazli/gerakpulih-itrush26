@@ -91,7 +91,7 @@ export function GrafikProgres({ seri }: { seri: SeriGerakan[] }) {
 
       <figure>
         <ChartContainer config={konfigurasi} className="aspect-auto h-64 w-full" role="img" aria-label={deskripsi}>
-          <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -12 }} accessibilityLayer>
+          <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -4 }} accessibilityLayer>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="urut" tickFormatter={(i: number) => data[i]?.label ?? ""} tickLine={false} axisLine={false} minTickGap={24} />
             <YAxis domain={[0, 180]} ticks={[0, 45, 90, 135, 180]} tickFormatter={(v: number) => `${v}°`} tickLine={false} axisLine={false} width={44} />

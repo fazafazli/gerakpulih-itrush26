@@ -1,4 +1,4 @@
-import { CalendarCheck, Check, ShieldCheck } from "lucide-react";
+import { CalendarCheck, Check, House, LogOut, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -11,6 +11,7 @@ import { isKodeGerakan } from "@/lib/pose/exercises";
 import { namaDenganSisi } from "@/lib/sesi/teks";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cn } from "@/lib/utils";
+import { keluarPasien } from "./actions";
 
 export const metadata: Metadata = { title: "Latihan hari ini · GerakPulih" };
 
@@ -117,6 +118,24 @@ async function IsiBeranda() {
       <Link href="/privasi" className="mx-auto inline-flex min-h-11 items-center gap-2 text-base font-semibold text-muted-foreground underline underline-offset-4">
         <ShieldCheck aria-hidden className="size-5" /> Privasi & data saya
       </Link>
+
+      {/* Hanya akun demo: juri perlu bisa kembali ke landing & keluar. Pasien sungguhan tidak diberi tombol keluar
+          agar tidak kehilangan akses (masuk lagi butuh link dari terapis). */}
+      {pasien.is_demo && (
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <Link href="/" className="inline-flex min-h-11 items-center gap-2 text-base font-semibold text-muted-foreground underline underline-offset-4">
+            <House aria-hidden className="size-5" /> Halaman utama
+          </Link>
+          <form action={keluarPasien}>
+            <button
+              type="submit"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-base font-semibold text-muted-foreground underline underline-offset-4"
+            >
+              <LogOut aria-hidden className="size-5" /> Keluar dari demo
+            </button>
+          </form>
+        </div>
+      )}
 
       <KirimTertunda pasienId={pasien.id} />
     </>

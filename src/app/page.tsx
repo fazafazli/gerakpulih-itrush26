@@ -215,17 +215,30 @@ export default async function Beranda() {
               </p>
             </div>
             <ul className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-              {PRIVASI.map(({ ikon: Ikon, judul, isi }) => (
-                <li key={judul} className="flex gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-primary">
-                    <Ikon aria-hidden className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="font-semibold">{judul}</h3>
-                    <p className="mt-1 leading-relaxed text-secondary-foreground">{isi}</p>
-                  </div>
-                </li>
-              ))}
+              {/* Janji utama (video tetap di HP) ditonjolkan; empat poin lain mengisi grid 2×2 di sebelahnya. */}
+              {PRIVASI.map(({ ikon: Ikon, judul, isi }, i) =>
+                i === 0 ? (
+                  <li key={judul} className="flex flex-col gap-4 rounded-2xl bg-card p-6 shadow-sm sm:col-span-2 lg:col-span-1 lg:row-span-2">
+                    <span className="flex size-12 items-center justify-center rounded-xl bg-mint text-primary">
+                      <Ikon aria-hidden className="size-6" />
+                    </span>
+                    <div>
+                      <h3 className="font-heading text-xl font-bold">{judul}</h3>
+                      <p className="mt-2 text-lg leading-relaxed text-secondary-foreground">{isi}</p>
+                    </div>
+                  </li>
+                ) : (
+                  <li key={judul} className="flex gap-4">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-primary">
+                      <Ikon aria-hidden className="size-5" />
+                    </span>
+                    <div>
+                      <h3 className="font-semibold">{judul}</h3>
+                      <p className="mt-1 leading-relaxed text-secondary-foreground">{isi}</p>
+                    </div>
+                  </li>
+                ),
+              )}
             </ul>
             <p className="mt-10">
               <Link href="/privasi" className={cn(kelasTautan, "gap-1 font-semibold text-primary")}>
