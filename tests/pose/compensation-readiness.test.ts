@@ -58,9 +58,9 @@ describe("postur & kompensasi", () => {
 describe("cek kesiapan", () => {
   const gerakan = GERAKAN.angkat_samping;
 
-  it("ruangan gelap → satu instruksi utama: nyalakan lampu", () => {
+  it("ruangan gelap & lengan tak terbaca → satu instruksi utama: nyalakan lampu", () => {
     const statistik = hitungStatistikGambar(gambarPolos(160, 120, 20), 160, 120);
-    const r = nilaiKesiapan({ statistik, landmark: tubuh(), jumlahOrang: 1, gerakan, sisi: "kanan" });
+    const r = nilaiKesiapan({ statistik, landmark: tubuh({ keyakinan: 0.2 }), jumlahOrang: 1, gerakan, sisi: "kanan" });
     expect(r.siap).toBe(false);
     expect(r.instruksiUtama?.kode).toBe("cahaya");
     expect(r.instruksiUtama?.pesan).toMatch(/lampu/);
@@ -110,24 +110,27 @@ describe("pilihOrang", () => {
   });
 });
 
-describe("aturan membelakangi cahaya (dilonggarkan)", () => {
+describe("aturan cahaya (dilonggarkan setelah uji HP)", () => {
   const dasar = { jumlahOrang: 1, gerakan: GERAKAN.angkat_samping, sisi: "kanan" as const };
-  const terang = (kecerahanTubuh: number) => ({ kecerahan: 160, ketajaman: 60, kecerahanTubuh });
+  const statistik = (kecerahan: number) => ({ kecerahan, ketajaman: 60 });
 
-  it("tidak menunda latihan bila pose tetap terbaca (hanya info)", () => {
-    const h = nilaiKesiapan({ ...dasar, statistik: terang(60), landmark: tubuh() });
-    expect(h.siap).toBe(true);
-    expect(h.item.find((i) => i.kode === "membelakangi_cahaya")?.status).toBe("info");
+  it("cahaya kurang pas tidak menunda latihan bila pose tetap terbaca (hanya info)", () => {
+    for (const kecerahan of [30, 240]) {
+      const h = nilaiKesiapan({ ...dasar, statistik: statistik(kecerahan), landmark: tubuh() });
+      expect(h.siap).toBe(true);
+      expect(h.item.find((i) => i.kode === "cahaya")?.status).toBe("info");
+    }
   });
 
-  it("menghalangi bila backlight membuat lengan tidak terbaca", () => {
-    const h = nilaiKesiapan({ ...dasar, statistik: terang(60), landmark: tubuh({ keyakinan: 0.2 }) });
+  it("menghalangi bila cahaya buruk membuat lengan tidak terbaca", () => {
+    const h = nilaiKesiapan({ ...dasar, statistik: statistik(240), landmark: tubuh({ keyakinan: 0.2 }) });
     expect(h.siap).toBe(false);
-    expect(h.item.find((i) => i.kode === "membelakangi_cahaya")?.status).toBe("gagal");
+    expect(h.instruksiUtama?.pesan).toMatch(/silau/);
   });
 
-  it("tubuh sedikit lebih gelap (baju gelap) bukan backlight", () => {
-    const h = nilaiKesiapan({ ...dasar, statistik: terang(95), landmark: tubuh() });
-    expect(h.item.some((i) => i.kode === "membelakangi_cahaya")).toBe(false);
+  it("gambar terang dengan badan gelap (dulu dianggap membelakangi lampu) tetap siap", () => {
+    const h = nilaiKesiapan({ ...dasar, statistik: statistik(160), landmark: tubuh() });
+    expect(h.siap).toBe(true);
+    expect(h.item.find((i) => i.kode === "cahaya")?.status).toBe("lolos");
   });
 });

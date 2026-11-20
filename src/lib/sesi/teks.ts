@@ -23,7 +23,7 @@ export function suaraPengantar(nomor: number, kode: KodeGerakan, sisi: Sisi, rep
 export const PANDUAN_SIAPKAN = [
   "HP berdiri tegak, setinggi dada",
   "Duduk di kursi tanpa sandaran tangan",
-  "Ruangan terang, jangan membelakangi jendela",
+  "Ruangan cukup terang",
   "Pendamping ada di dekat pasien",
 ] as const;
 
