@@ -267,7 +267,7 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
 
     if (b.t - statistikRef.current.t > 500) {
       kanvasKecilRef.current ??= document.createElement("canvas");
-      statistikRef.current = { t: b.t, nilai: ukurGambar(b.video, kanvasKecilRef.current, lm) };
+      statistikRef.current = { t: b.t, nilai: ukurGambar(b.video, kanvasKecilRef.current) };
     }
 
     const hasil = nilaiKesiapan({
@@ -423,7 +423,12 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
       {/* Video selalu ada di DOM (tersembunyi saat tidak dipakai) agar stream kamera tidak terputus antar-tahap. */}
       <div className={kameraTampil ? "flex flex-col gap-4" : "hidden"}>
         <PenandaLangkah aktif={tahap.jenis === "latihan" ? 2 : 1} />
-        <div className="relative w-full overflow-hidden rounded-3xl bg-foreground" style={{ aspectRatio: rasioVideo }}>
+        {/* Tinggi video dibatasi: kamera potret di HP bisa lebih tinggi dari layar dan mendorong tombol ke bawah.
+            Saat pengantar, video hanya pratinjau sehingga dibuat lebih kecil. Sisa ruang diberi letterbox (object-contain). */}
+        <div
+          className={`relative w-full overflow-hidden rounded-3xl bg-foreground ${tahap.jenis === "pengantar" ? "max-h-[28dvh]" : "max-h-[52dvh]"}`}
+          style={{ aspectRatio: rasioVideo }}
+        >
           <video
             ref={videoRef}
             onLoadedMetadata={saatMetadata}
@@ -482,7 +487,10 @@ export function SesiLatihan(props: { pasienId: string; nama: string; sisi: Sisi;
           )}
         </div>
 
-        <TombolBerhenti onClick={berhentiNyeri} />
+        {/* Menempel di bawah layar agar tombol keselamatan selalu terlihat walau isi panel perlu digulir. */}
+        <div className="sticky bottom-0 -mx-4 mt-auto bg-background/95 px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+          <TombolBerhenti onClick={berhentiNyeri} />
+        </div>
       </div>
 
       <DialogAkhiri
