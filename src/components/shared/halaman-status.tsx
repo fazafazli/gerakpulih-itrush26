@@ -9,7 +9,7 @@ export function HalamanStatus({ judul, isi, aksi, sudut = 45 }: { judul: string;
       <p className="flex items-center gap-2 font-heading text-lg font-bold text-primary">
         <Logo /> GerakPulih
       </p>
-      <div className="gp-tekstur flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
         <BusurSudut sudut={sudut} nada="utama" className="w-28" />
         <h1 className="font-heading text-[28px] leading-tight font-bold">{judul}</h1>
         <div className="text-lg leading-relaxed text-muted-foreground">{isi}</div>

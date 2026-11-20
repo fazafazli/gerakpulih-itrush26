@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, Link2Off, RefreshCw, ShieldCheck } from "lucide-react";
+import { Link2, Link2Off, RefreshCw } from "lucide-react";
 import { useActionState, useState } from "react";
 import { buatLinkBaru, type StatusAksi, type StatusLink, ubahStatusLink } from "@/app/(terapis)/pasien/actions";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,8 @@ export function KelolaLink({ pasienId, nama, aktif, isDemo }: Props) {
         {aktif ? "Aktif: pasien bisa membuka latihan" : "Nonaktif: pasien tidak bisa membuka latihan"}
       </p>
 
-      {isDemo ? (
-        <p className="mt-3 flex items-start gap-2 rounded-lg bg-cyan-lembut px-3 py-2 text-sm text-secondary-foreground">
-          <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
-          Pasien contoh: link dijaga tetap aktif agar semua juri bisa mencoba. Coba fitur ini pada pasien baru.
-        </p>
-      ) : (
+      {/* Pasien contoh: link dijaga tetap aktif (tombol disembunyikan; trigger database juga menolak perubahan). */}
+      {!isDemo && (
         <div className="mt-4 flex flex-col gap-2">
           <DialogStatus pasienId={pasienId} nama={nama} aktif={aktif} />
           <DialogLinkBaru pasienId={pasienId} nama={nama} />

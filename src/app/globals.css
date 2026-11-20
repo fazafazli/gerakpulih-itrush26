@@ -16,6 +16,7 @@
   --color-teal-segar: var(--teal-segar);
   --color-biru: var(--biru);
   --color-biru-lembut: var(--biru-lembut);
+  --color-hijau-malam: var(--hijau-malam);
   --color-teks-redup: var(--teks-redup);
   --color-sukses: var(--sukses);
   --color-sukses-teks: var(--sukses-teks);
@@ -129,6 +130,8 @@
   --teal-segar: #14b8a6;
   --biru: #0b5cad;
   --biru-lembut: #eaf2fc;
+  /* Latar footer: hijau sangat gelap sekeluarga dengan teal. Teks di atasnya: putih/mint (≥ 6:1). */
+  --hijau-malam: #0b2a27;
   --teks-redup: #8a9d9a;
   --sukses: #16865d;
   --sukses-teks: #0f6b49;
@@ -262,10 +265,33 @@ html[data-animasi] .gp-muncul {
 
 /* ---------- Motif & tekstur (Fase E) ---------- */
 
-/* Pola titik mint sangat tipis untuk latar; tidak dipakai di bawah teks kecil berkontras rendah. */
-.gp-tekstur {
-  background-image: radial-gradient(color-mix(in oklab, var(--primary) 9%, transparent) 1px, transparent 1.5px);
-  background-size: 18px 18px;
+/*
+ * Garis kontur lengkung tipis, khusus latar hero landing. Warna dari token --primary lewat mask,
+ * jadi tidak ada hex baru. Lebar ubin minimal 56rem: di HP hanya bagian tengah yang tampak (lengkung landai),
+ * di layar lebar ubin direntangkan. Di @layer components agar utilitas (mis. sticky) tetap bisa menimpa.
+ */
+@layer components {
+  .gp-tekstur {
+    position: relative;
+    isolation: isolate;
+  }
+  .gp-tekstur::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background-color: color-mix(in oklab, var(--primary) 11%, transparent);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 520' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='black' stroke-width='1.25' stroke-linecap='round' vector-effect='non-scaling-stroke'%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 46C160 14 330 88 560 58S930 6 1220 54'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 118C210 150 380 86 610 112S1010 168 1220 116'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 196C140 168 300 226 520 204S880 150 1060 186 1180 220 1220 206'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 272C230 300 420 244 640 268S1020 312 1220 262'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 338C120 318 260 372 470 352S820 300 1000 336 1160 368 1220 350'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 414C200 440 400 388 650 410S1040 452 1220 404'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 484C170 462 350 506 580 488S950 450 1220 492'/%3E%3C/g%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 520' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='black' stroke-width='1.25' stroke-linecap='round' vector-effect='non-scaling-stroke'%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 46C160 14 330 88 560 58S930 6 1220 54'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 118C210 150 380 86 610 112S1010 168 1220 116'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 196C140 168 300 226 520 204S880 150 1060 186 1180 220 1220 206'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 272C230 300 420 244 640 268S1020 312 1220 262'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 338C120 318 260 372 470 352S820 300 1000 336 1160 368 1220 350'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 414C200 440 400 388 650 410S1040 452 1220 404'/%3E%3Cpath vector-effect='non-scaling-stroke' d='M-20 484C170 462 350 506 580 488S950 450 1220 492'/%3E%3C/g%3E%3C/svg%3E");
+    -webkit-mask-size: max(100%, 56rem) 46rem;
+    mask-size: max(100%, 56rem) 46rem;
+    -webkit-mask-repeat: repeat-y;
+    mask-repeat: repeat-y;
+    -webkit-mask-position: center top;
+    mask-position: center top;
+  }
 }
 
 /* Garis/busur yang "tergambar" sekali (SVG dengan pathLength=1). Statis saat reduced-motion. */
@@ -329,4 +355,22 @@ html[data-animasi] .gp-muncul {
 @media (prefers-reduced-motion: reduce) {
   .gp-hitung,
   .gp-cincin { animation: none; }
+}
+
+/* ---------- Intro landing (kunjungan pertama) ---------- */
+/* Hanya transform & opacity (didukung semua browser HP); komponen tidak dirender saat reduced-motion. */
+.gp-intro-lengan {
+  transform: rotate(-150deg);
+  animation: gp-intro-angkat 1400ms cubic-bezier(0.45, 0, 0.2, 1) 200ms both;
+}
+.gp-intro-teks {
+  animation: gp-intro-muncul 500ms ease-out 1100ms both;
+}
+@keyframes gp-intro-angkat {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-150deg); }
+}
+@keyframes gp-intro-muncul {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
 }

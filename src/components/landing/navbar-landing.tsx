@@ -91,9 +91,13 @@ export function NavbarLanding() {
   return (
     <header
       data-keadaan={diAtas ? "atas" : "tergulir"}
-      className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur-sm transition-[background-color,border-color] duration-300 data-[keadaan=atas]:border-transparent data-[keadaan=atas]:bg-transparent data-[keadaan=atas]:backdrop-blur-none"
+      // Tinggi header tetap 4rem (main memakai -mt-16); yang berubah hanya "kapsul" nav di dalamnya.
+      className="group/kepala sticky top-0 z-40 h-16 px-2 pt-2 sm:px-4"
     >
-      <nav aria-label="Utama" className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+      <nav
+        aria-label="Utama"
+        className="relative mx-auto flex h-14 max-w-6xl items-center gap-6 rounded-2xl border border-transparent px-3 transition-[background-color,border-color,box-shadow,height,max-width,padding] duration-300 sm:px-4 lg:group-data-[keadaan=tergulir]/kepala:h-16 lg:group-data-[keadaan=tergulir]/kepala:max-w-[74rem] lg:group-data-[keadaan=tergulir]/kepala:px-6 group-data-[keadaan=tergulir]/kepala:border-border group-data-[keadaan=tergulir]/kepala:bg-card/85 group-data-[keadaan=tergulir]/kepala:shadow-[0_6px_24px_-12px_color-mix(in_oklab,var(--primary)_35%,transparent)] group-data-[keadaan=tergulir]/kepala:backdrop-blur-md"
+      >
         <Link href="/" className={`flex shrink-0 items-center gap-2 rounded-md font-heading text-lg font-bold tracking-tight text-primary ${fokus}`}>
           <Logo /> GerakPulih
         </Link>
@@ -126,8 +130,8 @@ export function NavbarLanding() {
             <X aria-hidden className="hidden size-5 group-open:block" />
             <span className="sr-only">Menu</span>
           </summary>
-          <div className="absolute inset-x-0 top-16 border-b border-border bg-card shadow-lg">
-            <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 sm:px-6">
+          <div className="absolute inset-x-0 top-full mt-2 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+            <div className="flex flex-col gap-1 p-3">
               {BAGIAN_LANDING.map((b) => (
                 <a
                   key={b.id}

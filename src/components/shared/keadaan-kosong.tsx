@@ -26,7 +26,7 @@ export function KeadaanKosong({
   return (
     <div
       className={cn(
-        "gp-tekstur flex items-center gap-4 rounded-xl",
+        "flex items-center gap-4 rounded-xl",
         ringkas ? "px-5 py-5" : "flex-col items-start border border-dashed border-primary/30 bg-mint-pucat p-6 sm:p-8",
         className,
       )}

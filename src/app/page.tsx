@@ -24,6 +24,8 @@ import { BusurSudut } from "@/components/ilustrasi/busur-sudut";
 import { IlustrasiGerakan } from "@/components/ilustrasi/ilustrasi-gerakan";
 import { Faq } from "@/components/landing/faq";
 import { FooterLanding } from "@/components/landing/footer-landing";
+import { IntroAnimasi } from "@/components/landing/intro-animasi";
+import { Lengkung } from "@/components/landing/lengkung";
 import { Hero } from "@/components/landing/hero";
 import { kelasCtaUtama, kelasTautan } from "@/components/landing/kelas";
 import { NavbarLanding } from "@/components/landing/navbar-landing";
@@ -108,21 +110,23 @@ export default async function Beranda() {
       </a>
       {/* Penanda posisi paling atas: navbar transparan selama elemen ini terlihat. */}
       <div id="penanda-atas" aria-hidden className="pointer-events-none absolute top-0 left-0 h-px w-px" />
+      <IntroAnimasi />
       <NavbarLanding />
       <PenandaMuncul />
 
       {/* Navbar sticky menumpang di atas hero (latar hero ikut terlihat saat navbar transparan). */}
       <main className="-mt-16">
-        <div className="gp-tekstur bg-mint-pucat pt-16">
+        <div className="gp-tekstur relative overflow-hidden bg-mint-pucat pt-16">
           <Hero />
+          <Lengkung posisi="bawah" varian={0} />
         </div>
 
         {/* Masalah: editorial, latar putih */}
         <section aria-labelledby="judul-masalah" className={cn(section, "bg-card")}>
           <div className={cn(wadah, "gp-muncul grid gap-8 md:grid-cols-[1fr_2fr]")}>
-            <div className="flex flex-col gap-3">
-              <BusurSudut sudut={40} className="w-16" />
-              <h2 id="judul-masalah" className="text-sm font-semibold tracking-[0.12em] text-primary uppercase">
+            <div className="flex flex-col gap-3 md:gap-5">
+              <BusurSudut sudut={40} className="w-16 md:w-44" />
+              <h2 id="judul-masalah" className="text-sm font-semibold tracking-[0.12em] text-primary uppercase md:text-lg">
                 Masalahnya
               </h2>
             </div>
@@ -140,7 +144,9 @@ export default async function Beranda() {
         </section>
 
         {/* Cara kerja: linimasa, latar soft cyan */}
-        <section id="cara-kerja" aria-labelledby="judul-cara" className={cn(section, "gp-tekstur bg-cyan-lembut")}>
+        <section id="cara-kerja" aria-labelledby="judul-cara" className={cn(section, "relative bg-mint-pucat")}>
+          <Lengkung posisi="atas" varian={1} />
+          <Lengkung posisi="bawah" varian={2} cermin />
           <div className={cn(wadah, "gp-muncul")}>
             <h2 id="judul-cara" className={judulSection}>
               Cara kerja
@@ -167,7 +173,7 @@ export default async function Beranda() {
               Satu alur, dua pengguna
             </h2>
             {/* Tiga gerakan lengan yang didukung, dengan contoh gerak yang sama seperti di layar pasien */}
-            <ul className="gp-tekstur mt-10 grid grid-cols-3 gap-2 rounded-2xl bg-mint-pucat px-3 py-6 sm:gap-6 sm:px-8">
+            <ul className="mt-10 grid grid-cols-3 gap-2 rounded-2xl bg-mint-pucat px-3 py-6 sm:gap-6 sm:px-8">
               {KODE_GERAKAN.map((k) => (
                 <li key={k} className="flex flex-col items-center gap-2 text-center">
                   <IlustrasiGerakan kode={k} className="h-24 w-auto sm:h-32" />
@@ -203,7 +209,9 @@ export default async function Beranda() {
         </section>
 
         {/* Privasi & keamanan: pita mint */}
-        <section id="privasi" aria-labelledby="judul-privasi" className={cn(section, "bg-mint")}>
+        <section id="privasi" aria-labelledby="judul-privasi" className={cn(section, "relative bg-mint")}>
+          <Lengkung posisi="atas" varian={2} />
+          <Lengkung posisi="bawah" varian={0} cermin />
           <div className={cn(wadah, "gp-muncul")}>
             <div className="max-w-2xl">
               <h2 id="judul-privasi" className={judulSection}>
@@ -279,7 +287,9 @@ export default async function Beranda() {
         </section>
 
         {/* FAQ: pale mint, <details> native */}
-        <section id="faq" aria-labelledby="judul-faq" className={cn(section, "bg-mint-pucat")}>
+        <section id="faq" aria-labelledby="judul-faq" className={cn(section, "relative bg-mint-pucat")}>
+          <Lengkung posisi="atas" varian={0} cermin />
+          <Lengkung posisi="bawah" varian={1} />
           <div className={cn(wadah, "gp-muncul grid gap-10 lg:grid-cols-[1fr_2fr]")}>
             <div>
               <h2 id="judul-faq" className={judulSection}>

@@ -25,7 +25,7 @@ export function PanelPengantar(props: {
         <p className="mt-2 text-xl leading-relaxed text-muted-foreground">{g.instruksi}</p>
       </div>
       {/* Contoh gerakan bergerak pelan; pasien & pendamping melihat apa yang harus dilakukan */}
-      <div className="gp-tekstur flex justify-center rounded-2xl border border-border bg-mint-pucat py-3">
+      <div className="flex justify-center rounded-2xl border border-border bg-mint-pucat py-3">
         <IlustrasiGerakan kode={props.kode} sisi={props.sisi} className="h-32 w-auto min-[400px]:h-44" />
       </div>
       <ul className="flex flex-col gap-2 text-xl">

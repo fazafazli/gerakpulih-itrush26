@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Suspense } from "react";
+import { PemberitahuanCookie } from "@/components/shared/pemberitahuan-cookie";
 import { originPublik } from "@/lib/situs";
 import "./globals.css";
 
@@ -24,7 +26,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${jakarta.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* usePathname pada rute dinamis wajib di dalam Suspense (Cache Components). */}
+        <Suspense fallback={null}>
+          <PemberitahuanCookie />
+        </Suspense>
+      </body>
     </html>
   );
 }

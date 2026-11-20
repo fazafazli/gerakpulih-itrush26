@@ -83,7 +83,7 @@ async function IsiDashboard() {
 function AngkaRingkas(a: ReturnType<typeof angkaDashboard>) {
   const persen = Math.min(100, a.persenKepatuhan ?? 0);
   return (
-    <section aria-labelledby="judul-angka" className="gp-tekstur rounded-xl bg-mint p-5">
+    <section aria-labelledby="judul-angka" className="rounded-xl bg-mint p-5">
       <h2 id="judul-angka" className="text-sm font-medium text-secondary-foreground">
         Kepatuhan latihan 7 hari
       </h2>

@@ -31,13 +31,21 @@ export async function masuk(_sebelumnya: StatusMasuk, formData: FormData): Promi
   redirect(tujuanAman(hasil.data.lanjut));
 }
 
+/**
+ * Akun demo sengaja publik (tombol satu klik untuk juri), jadi kredensialnya bukan rahasia.
+ * Env tetap diutamakan agar sandi bisa diganti tanpa mengubah kode.
+ */
+const DEMO_BAWAAN = { email: "demo-terapis@example.com", password: "demoterapis" } as const;
+
 export async function masukDemo(): Promise<void> {
-  const email = process.env.DEMO_TERAPIS_EMAIL;
-  const password = process.env.DEMO_TERAPIS_PASSWORD;
-  if (!email || !password) redirect("/masuk?galat=demo");
+  const email = process.env.DEMO_TERAPIS_EMAIL || DEMO_BAWAAN.email;
+  const password = process.env.DEMO_TERAPIS_PASSWORD || DEMO_BAWAAN.password;
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect("/masuk?galat=demo");
+  if (error) {
+    console.error(`[masuk-demo] gagal: ${error.status ?? "-"} ${error.code ?? ""} ${error.message}`);
+    redirect("/masuk?galat=demo");
+  }
   redirect("/dashboard");
 }
 
