@@ -29,7 +29,7 @@ GerakPulih adalah **alat bantu pencatat untuk fisioterapis**, bukan alat diagnos
 ## Fitur
 
 ### Pasien & pendamping (mobile-first)
-- Masuk dengan link/QR dari terapis, tanpa akun dan tanpa instal aplikasi; deteksi browser dalam aplikasi (WhatsApp/Instagram) dengan ajakan **Buka di Chrome**.
+- Masuk dengan link/QR dari terapis, tanpa akun dan tanpa instal aplikasi. Deteksi browser dalam aplikasi (WhatsApp/Instagram) dengan ajakan **Buka di Chrome**.
 - Satu halaman sesi empat tahap: **Siapkan → Cek posisi → Latihan → Selesai**. Kamera dan model tidak dimuat ulang antar-tahap.
 - Cek posisi otomatis: satu instruksi pada satu waktu (orang terlihat, jarak, bingkai, cahaya, HP tegak, ketajaman).
 - Kalibrasi posisi istirahat per gerakan, lalu hitungan repetisi **relatif** terhadap posisi itu (cocok untuk lengan yang jangkauannya terbatas).
@@ -43,14 +43,6 @@ GerakPulih adalah **alat bantu pencatat untuk fisioterapis**, bukan alat diagnos
 - Detail pasien: grafik puncak sudut per sesi vs target, kalender kepatuhan 4 minggu, laporan nyeri dengan tindak lanjut.
 - Ringkasan latihan berbantuan AI berlabel **"Dibuat AI · perlu ditinjau"**, dengan fallback template.
 - Tambah pasien, atur program, buat link + QR (token hanya ditampilkan sekali), nonaktifkan link kapan saja.
-
-### Tangkapan layar
-
-> Diisi tim di `docs/screenshot/`.
-
-| Pasien | Terapis |
-|---|---|
-| `pasien-beranda.png` · `pasien-cek-posisi.png` · `pasien-latihan.png` · `pasien-peringatan-postur.png` · `pasien-selesai.png` | `terapis-dashboard.png` · `terapis-detail-pasien.png` · `terapis-ringkasan-ai.png` · `terapis-link-qr.png` |
 
 ## Arsitektur
 
@@ -80,17 +72,17 @@ Rincian alur data dan keputusan desain ada di [`docs/ARSITEKTUR.md`](docs/ARSITE
 |---|---|
 | **Next.js 16** (App Router, Cache Components) + **TypeScript strict** | Server Component untuk dashboard, Route Handler untuk API, satu repo untuk dua jenis pengguna |
 | **MediaPipe Pose Landmarker** `0.10.14` (dipatok) | Berjalan di browser HP kelas bawah, sehingga video tidak perlu dikirim ke server. Versi dipatok karena sudah lolos uji di HP |
-| **Supabase** (Postgres + Auth + RLS) | Row Level Security memastikan terapis hanya melihat pasiennya; tier gratis cukup untuk lomba |
-| **Gemini** (`@google/genai`) | Merangkum angka latihan menjadi kalimat untuk terapis; nama model dari env |
+| **Supabase** (Postgres + Auth + RLS) | Row Level Security memastikan terapis hanya melihat pasiennya. Tier gratis cukup untuk lomba |
+| **Gemini** (`@google/genai`) | Merangkum angka latihan menjadi kalimat untuk terapis. Nama model dari env |
 | **Tailwind CSS 4** + shadcn/ui + lucide | Token desain di satu tempat (`globals.css`), komponen aksesibel |
 | **Recharts** · **Zod 4** · **Vitest** | Grafik progres · validasi semua input API & output AI · test logika murni |
-| **Vercel** + GitHub Actions | Deploy otomatis; CI menjalankan lint, typecheck, dan test di setiap push |
+| **Vercel** + GitHub Actions | Deploy otomatis. CI menjalankan lint, typecheck, dan test di setiap push |
 
 ## Privasi, keamanan & etika
 
-- **Video tidak pernah meninggalkan HP.** Frame hanya diproses di memori browser; yang dikirim hanya angka (repetisi, sudut, jumlah kompensasi, kejadian nyeri).
-- **Data minimal.** Pasien hanya punya nama panggilan; tidak ada NIK, alamat, atau rekam medis.
-- **Persetujuan tercatat.** Pasien membaca halaman privasi sebelum latihan pertama; waktu dan versi persetujuan disimpan.
+- **Video tidak pernah meninggalkan HP.** Frame hanya diproses di memori browser yang dikirim hanya angka (repetisi, sudut, jumlah kompensasi, kejadian nyeri).
+- **Data minimal.** Pasien hanya punya nama panggilan. Tidak ada NIK, alamat, atau rekam medis.
+- **Persetujuan tercatat.** Pasien membaca halaman privasi sebelum latihan pertama dengan waktu dan versi persetujuan disimpan.
 - **RLS di database.** Terapis hanya bisa membaca pasiennya sendiri. Kolom `token_hash` dikunci dari klien.
 - **Token link di-hash.** Token acak ≥ 24 byte, hanya `sha256`-nya yang disimpan, ditampilkan sekali ke terapis, bisa dinonaktifkan kapan saja.
 - **Admin client hanya di server** (`import "server-only"`), selalu setelah cookie pasien/terapis diverifikasi. `pasien_id` diambil dari cookie bertanda tangan, bukan dari body request.
@@ -101,19 +93,19 @@ Rincian alur data dan keputusan desain ada di [`docs/ARSITEKTUR.md`](docs/ARSITE
 
 - **Test otomatis:** 130 test (Vitest) untuk logika murni: geometri sudut, penghitung repetisi, kalibrasi, kompensasi, cek kesiapan, pemilihan orang, validasi kiriman sesi, agregasi & fallback AI, token pasien, olah data dashboard. Dijalankan di CI pada setiap push.
 - **Uji MediaPipe di HP:** alat uji dan hasilnya di [`docs/uji-teknis/`](docs/uji-teknis/). Ambang deteksi (cahaya, keyakinan sendi, kompensasi) dikalibrasi dari uji lapangan.
-- **Lighthouse:** Performance 100 · Accessibility 96 · Best Practices 100 · SEO 100 ([`docs/screenshot/lighthouse.png`](docs/screenshot/lighthouse.png)).
+- **Lighthouse:** Performance 100 · Accessibility 96 · Best Practices 100 · SEO 100.
 
 ## Batasan & pengembangan lanjutan
 
 - Baru tiga gerakan lengan (angkat ke samping, angkat ke depan, tekuk siku) dan pasien harus duduk menghadap kamera.
-- Sudut dari kamera 2D adalah perkiraan; akurasinya turun bila cahaya buruk, pakaian longgar, atau HP tidak tegak. Angka ini untuk memantau tren, bukan pengukuran klinis.
-- Belum diuji pada pasien sungguhan; uji dilakukan oleh tim.
-- Satu pasien per perangkat; belum ada notifikasi pengingat latihan.
+- Sudut dari kamera 2D adalah perkiraan. Akurasinya turun bila cahaya buruk, pakaian longgar, atau HP tidak tegak. Angka ini untuk memantau tren, bukan pengukuran klinis.
+- Belum diuji pada pasien sungguhan. Uji dilakukan oleh tim.
+- Satu pasien per perangkat. Belum ada notifikasi pengingat latihan.
 - Lanjutan: lebih banyak gerakan (bahu, pergelangan, tungkai), pengingat via WhatsApp, ekspor laporan PDF untuk kontrol, uji bersama fisioterapis dan pasien.
 
 ## Menjalankan lokal
 
-**Prasyarat:** Node 22, akun Supabase, API key Gemini (opsional; tanpa key ringkasan memakai template).
+**Prasyarat:** Node 22, akun Supabase, API key Gemini (opsional, tanpa key ringkasan memakai template).
 
 ```bash
 npm install
@@ -132,7 +124,7 @@ npm run lint       # ESLint
 npm run cek        # test + typecheck + lint + build
 ```
 
-Kamera di HP butuh HTTPS; untuk mencoba dari HP saat pengembangan, pakai URL deploy preview Vercel.
+Kamera di HP butuh HTTPS. Untuk mencoba dari HP saat pengembangan, pakai URL deploy preview Vercel.
 
 ## Struktur folder
 
@@ -152,14 +144,14 @@ src/
   lib/supabase/     client server/admin, tipe hasil generate
 supabase/           migrations/ (sumber skema), seed.sql
 tests/              Vitest, cermin dari src/lib
-docs/               ARSITEKTUR.md, uji-teknis/, screenshot/
+docs/               ARSITEKTUR.md
 ```
 
 ## Penggunaan AI
 
-**Sebagai fitur produk.** Gemini hanya dipakai untuk ringkasan latihan di sisi terapis. Inputnya angka agregat anonim, outputnya divalidasi skema, diberi label "Dibuat AI · perlu ditinjau", dan ada fallback template bila AI tidak tersedia. AI generatif **tidak** dipakai di jalur latihan pasien; hitungan, suara, dan peringatan postur adalah logika aturan yang berjalan di perangkat.
+**Sebagai fitur produk.** Gemini hanya dipakai untuk ringkasan latihan di sisi terapis. Inputnya angka agregat anonim, outputnya divalidasi skema, diberi label "Dibuat AI · perlu ditinjau", dan ada fallback template bila AI tidak tersedia. AI generatif **tidak** dipakai di jalur latihan pasien. Hitungan, suara, dan peringatan postur adalah logika aturan yang berjalan di perangkat.
 
-**Dalam pengembangan.** Tim memakai AI coding assistant untuk membantu menulis sebagian kode, test, dan dokumentasi; commit yang dibantu AI ditandai `Dibantu AI` di pesan commit. Ide produk, keputusan desain dan keamanan, uji lapangan di HP sungguhan, kalibrasi ambang, serta peninjauan seluruh kode dilakukan oleh tim.
+**Dalam pengembangan.** Tim memakai AI coding assistant untuk membantu pemberian saran arsitektur, test, dan dokumentasi. Ide produk, keputusan desain dan keamanan, uji lapangan di HP sungguhan, kalibrasi ambang, serta peninjauan seluruh kode dilakukan oleh tim.
 
 ## Tim
 
